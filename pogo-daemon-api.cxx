@@ -4,18 +4,18 @@
 
 using std::string;
 
-class StateUpdate{
+
+class Message{
 
 };
 
-class DaemonInterpreter{
-	private:
-	std::queue<string> messages;
-	public:
-	DaemonInterpreter(){
-	}
-};
+class StateUpdate{};
 
-std::function<void(string)> contactExchange(std::function<void(StateUpdate)>){
+class StateQueryResult{};
+
+std::function<string(string)> contactExchange(std::function<void(string)>){
 	
+}
+std::function<void(StateUpdate)> addressExchange(std::function<StateUpdate(Message)>){
+
 }
