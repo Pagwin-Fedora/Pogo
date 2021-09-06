@@ -2,43 +2,17 @@
 #include <queue>
 #include <string>
 #include <functional>
+#include "pogo-daemon-api-interns.h"
 
 using std::string;
-
-
-class UpdateMessage{
-
-};
-class QueryMessage{
-
-};
-class StateUpdate{
-	string toString(){
-		return "";
-	}
-};
-class QueryResult{
-	string toString(){
-		return "";
-	}
-};
-union _Message{
-	UpdateMessage update;
-	QueryMessage query;
-};
-class Message{
-	public:
-	std::uint32_t kind;
-	_Message value;
-	const static std::uint32_t updateKind;
-	const static std::uint32_t queryKind;
-};
-const uint32_t Message::updateKind = 0;
-const uint32_t Message::queryKind = 1;
 
 std::function<void(string)> returnContact;
 std::function<StateUpdate(UpdateMessage)> updateAddress;
 std::function<QueryResult(QueryMessage)> queryAddress;
+
+const uint32_t Message::updateKind = 0;
+const uint32_t Message::queryKind = 1;
+
 
 string contact(string message){
 	Message toForward = parseMessage(message);
@@ -55,7 +29,7 @@ string contact(string message){
 }
 
 void address(StateUpdate update){
-	returnContact(update.toString())
+	returnContact(update.toString());
 }
 
 std::function<string(string)> contactExchange(std::function<void(string)> ret){
@@ -66,4 +40,9 @@ std::function<void(StateUpdate)> addressExchange(std::function<StateUpdate(Updat
 	updateAddress = up;
 	queryAddress = que;
 	return address;
+}
+
+Message parseMessage(string msgTxt){
+	Message t;
+	return t;
 }
