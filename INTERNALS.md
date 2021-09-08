@@ -19,6 +19,7 @@ GET_MESSAGE (item_id)
 GET_GROUP_IDS
 GET_GROUP_MEMBERS (group_id)
 GET_GROUP_MEMBERS_REC (group_id)
+GET_METADATA (id)
 ```
 ### Internal state updates
 ```
@@ -36,6 +37,7 @@ ADOPT (parent_id) (child_id)
 DISOWN (parent_id) (child_id)
 SET_MESSAGE (item_id) (message)
 SET_PROGRESS (item_id) (progress_amount)
+SET_METADATA (id) (json)
 ```
 ## Internal to Storage
 After a message has been received and processed into a Message object the Message object is passed to the method provided via the addressExchange method which will store it in whatever storage method and then call the method returned by addressExchange with information on how State was updated
