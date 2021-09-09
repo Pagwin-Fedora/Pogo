@@ -2,10 +2,11 @@
 #include <list>
 #include <optional>
 #include <functional>
+#include <utility>
+
 using std::string;
 
 typedef uint64_t obj_id;
-
 enum MessageType{
 	CREATE_ITEM,
 	DEL_ITEM,
@@ -40,18 +41,21 @@ enum MessageType{
 	GET_GROUP_NAME
 };
 
-class MessageArg{
-	std::optional<string> stringArg;
-	std::optional<double> decimalArg;
+class InternalValue{
+	public:
+	std::optional<string> stringVal;
+	std::optional<double> decimalVal;
 	std::optional<obj_id> id;
+	string toString();
 };
 
+typedef std::pair<obj_id, InternalValue> StatePair;
 
 class Message{
 	private:
 		MessageType type;
-		std::list<MessageArg> args;
-		Message(MessageType, std::list<MessageArg>);
+		std::list<InternalValue> args;
+		Message(MessageType, std::list<InternalValue>);
 	public:
 		static Message parseMessage(string);
 		MessageType getType();
@@ -59,7 +63,7 @@ class Message{
 
 class StateResponse{
 	private:
-	std::list<obj_id>
+	std::list<StatePair> pairs;
 	public:
 	string toString();
 };
