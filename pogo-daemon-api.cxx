@@ -1,7 +1,4 @@
-#include <cstdint>
-#include <queue>
 #include <string>
-#include <functional>
 #include "pogo-daemon-api-interns.h"
 
 using std::string;
@@ -24,13 +21,13 @@ std::function<string(string)> contactExchange(std::function<void(string)> ret){
 	returnContact = ret;
 	return contact;
 }
-std::function<void(StateUpdate)> addressExchange(std::function<StateUpdate(UpdateMessage)> up,std::function<QueryResult(QueryMessage)> que){
-	updateAddress = up;
-	queryAddress = que;
+std::function<void(StateResponse)> addressExchange(std::function<StateResponse(Message)> addr){
+	returnAddress = addr;
 	return address;
 }
 
-Message parseMessage(string msgTxt){
-	Message t;
+Message Message::parseMessage(string msgTxt){
+	std::list<MessageArg> args;
+	Message t(MessageType::LIST_ITEM_IDS,args);
 	return t;
 }
