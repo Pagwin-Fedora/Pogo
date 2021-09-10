@@ -3,6 +3,7 @@
 #include <string>
 #include <numeric>
 #include "pogo-daemon-api-interns.h"
+#include "string-utils.h"
 
 using std::string;
 
@@ -30,9 +31,17 @@ std::function<void(StateResponse)> addressExchange(std::function<StateResponse(M
 }
 
 Message Message::parseMessage(string msgTxt){
+	auto split = nstd::str_split(msgTxt);
 	std::list<InternalValue> args;
-	Message t(MessageType::LIST_ITEM_IDS,args);
-	return t;
+	sswitch(split[0])
+		scase("CREATE_ITEM",{
+			
+		})
+		scase("DEL_ITEM",{
+			a
+		})
+	close_sswitch();
+	return ;
 }
 string StateResponse::toString(){
 	std::list<string> storage;
