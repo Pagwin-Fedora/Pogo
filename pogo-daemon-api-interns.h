@@ -38,15 +38,19 @@ enum MessageType{
 	GET_GROUP_MEMBERS_REC,
 	GET_METADATA,
 	GET_ITEM_NAME,
-	GET_GROUP_NAME
+	GET_GROUP_NAME,
+	NONE
 };
 
 class InternalValue{
+	private:
+	InternalValue();
 	public:
-	std::optional<string> stringVal;
-	std::optional<double> decimalVal;
-	std::optional<obj_id> id;
+	const std::optional<string> stringVal;
+	const std::optional<double> decimalVal;
+	const std::optional<obj_id> id;
 	string toString();
+	static InternalValue parseString(string);
 };
 
 typedef std::pair<obj_id, InternalValue> StatePair;
