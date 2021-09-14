@@ -37,134 +37,105 @@ Message Message::parseMessage(string msgTxt){
 	Message* msg;
 	sswitch(split[0])
 		scase("CREATE_ITEM",{
-			Message tmp(MessageType::CREATE_ITEM,args);
-			msg = &tmp;
+			msg = new Message(MessageType::CREATE_ITEM,args);
 		})
 		scase("DEL_ITEM",{
-			Message tmp(MessageType::DEL_ITEM,args);
-			msg = &tmp;
+			msg = new Message(MessageType::DEL_ITEM,args);
 		})
 		scase("DEL_ITEM_REC",{
-			Message tmp(MessageType::DEL_ITEM_REC,args);
-			msg = &tmp;
+			msg = new Message(MessageType::DEL_ITEM_REC,args);
 		})
 		scase("CREATE_GROUP",{
-			Message tmp(MessageType::CREATE_GROUP,args);
-			msg = &tmp;
+			msg = new Message(MessageType::CREATE_GROUP,args);
 		})
 		scase("DEL_GROUP",{
-			Message tmp(MessageType::DEL_GROUP,args);
-			msg = &tmp;
+			msg = new Message(MessageType::DEL_GROUP,args);
 		})
 		scase("DEL_GROUP_REC",{
-			Message tmp(MessageType::DEL_GROUP_REC,args);
-			msg = &tmp;
+			msg = new Message(MessageType::DEL_GROUP_REC,args);
 		})
 		scase("ADD_GROUP",{
-			Message tmp(MessageType::ADD_GROUP,args);
-			msg = &tmp;
+			msg = new Message(MessageType::ADD_GROUP,args);
 		})
 		scase("ADD_GROUP_REC",{
-			Message tmp(MessageType::ADD_GROUP_REC,args);
-			msg = &tmp;
+			msg = new Message(MessageType::ADD_GROUP_REC,args);
 		})
 		scase("REM_GROUP",{
-			Message tmp(MessageType::REM_GROUP,args);
-			msg = &tmp;
+			msg = new Message(MessageType::REM_GROUP,args);
 		})
 		scase("REM_GROUP_REC",{
-			Message tmp(MessageType::REM_GROUP_REC,args);
-			msg = &tmp;
+			msg = new Message(MessageType::REM_GROUP_REC,args);
 		})
 		scase("ADOPT",{
-			Message tmp(MessageType::ADOPT,args);
-			msg = &tmp;
+			msg = new Message(MessageType::ADOPT,args);
 		})
 		scase("DISOWN",{
-			Message tmp(MessageType::DISOWN,args);
-			msg = &tmp;
+			msg = new Message(MessageType::DISOWN,args);
 		})
 		scase("SET_MESSAGE",{
-			Message tmp(MessageType::SET_MESSAGE,args);
-			msg = &tmp;
+			msg = new Message(MessageType::SET_MESSAGE,args);
 		})
 		scase("SET_PROGRESS",{
-			Message tmp(MessageType::SET_PROGRESS,args);
-			msg = &tmp;
+			msg = new Message(MessageType::SET_PROGRESS,args);
 		})
 		scase("SET_METADATA",{
-			Message tmp(MessageType::SET_METADATA,args);
-			msg = &tmp;
+			msg = new Message(MessageType::SET_METADATA,args);
 		})
 		scase("SET_ITEM_NAME",{
-			Message tmp(MessageType::SET_ITEM_NAME,args);
-			msg = &tmp;
+			msg = new Message(MessageType::SET_ITEM_NAME,args);
 		})
 		scase("SET_GROUP_NAME",{
-			Message tmp(MessageType::SET_GROUP_NAME,args);
-			msg = &tmp;
+			msg = new Message(MessageType::SET_GROUP_NAME,args);
 		})
 		scase("LIST_ITEM_IDS",{
-			Message tmp(MessageType::LIST_ITEM_IDS,args);
-			msg = &tmp;
+			msg = new Message(MessageType::LIST_ITEM_IDS,args);
 		})
 		scase("GET_GROUPS",{
-			Message tmp(MessageType::GET_GROUPS,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_GROUPS,args);
 		})
 		scase("GET_PARENTS",{
-			Message tmp(MessageType::GET_PARENTS,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_PARENTS,args);
 		})
 		scase("GET_SIBLINGS",{
-			Message tmp(MessageType::GET_SIBLINGS,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_SIBLINGS,args);
 		})
 		scase("GET_CHILDREN",{
-			Message tmp(MessageType::GET_CHILDREN,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_CHILDREN,args);
 		})
 		scase("GET_CHILDREN_REC",{
-			Message tmp(MessageType::GET_CHILDREN_REC,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_CHILDREN_REC,args);
 		})
 		scase("GET_PROGRESS",{
-			Message tmp(MessageType::GET_PROGRESS,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_PROGRESS,args);
 		})
 		scase("GET_MESSAGE",{
-			Message tmp(MessageType::GET_MESSAGE,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_MESSAGE,args);
 		})
 		scase("GET_GROUP_IDS",{
-			Message tmp(MessageType::GET_GROUP_IDS,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_GROUP_IDS,args);
 		})
 		scase("GET_GROUP_MEMBERS",{
-			Message tmp(MessageType::GET_GROUP_MEMBERS,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_GROUP_MEMBERS,args);
 		})
 		scase("GET_GROUP_MEMBERS_REC",{
-			Message tmp(MessageType::GET_GROUP_MEMBERS_REC,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_GROUP_MEMBERS_REC,args);
 		})
 		scase("GET_METADATA",{
-			Message tmp(MessageType::GET_METADATA,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_METADATA,args);
 		})
 		scase("GET_ITEM_NAME",{
-			Message tmp(MessageType::GET_ITEM_NAME,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_ITEM_NAME,args);
 		})
 		scase("GET_GROUP_NAME",{
-			Message tmp(MessageType::GET_GROUP_NAME,args);
-			msg = &tmp;
+			msg = new Message(MessageType::GET_GROUP_NAME,args);
 		})
 		sdefault {
-			Message tmp (MessageType::NONE,args);
+			msg = new Message(MessageType::NONE,args);
 		}
 		close_sswitch
-	return *msg;			
+		Message deref = *msg;
+		delete msg;
+	return deref;			
 }
 string StateResponse::toString(){
 	std::list<string> storage;
