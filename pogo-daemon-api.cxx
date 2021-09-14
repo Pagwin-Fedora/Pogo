@@ -2,14 +2,13 @@
 #include <functional>
 #include <string>
 #include <numeric>
-#include "pogo-daemon-api-interns.h"
+#include "pogo-daemon-api.h"
 #include "string-utils.h"
 
 using std::string;
 
 std::function<void(string)> returnContact;
 std::function<StateResponse(Message)> returnAddress;
-
 
 
 string contact(string message){

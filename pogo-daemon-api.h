@@ -3,7 +3,6 @@
 #include <optional>
 #include <functional>
 #include <utility>
-
 using std::string;
 
 typedef uint64_t obj_id;
