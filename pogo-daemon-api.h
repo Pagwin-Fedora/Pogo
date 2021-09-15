@@ -76,3 +76,7 @@ class StateResponse{
 Message parseMessage(string);
 std::function<void(StateResponse)> addressExchange(std::function<StateResponse(Message)>);
 std::function<string(string)> contactExchange(std::function<void(string)>);
+
+namespace Pogo{
+	void init_frontend(string);
+}
