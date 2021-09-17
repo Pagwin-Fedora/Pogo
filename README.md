@@ -10,7 +10,7 @@ Is a cli program which can be used to communicate with the daemon without having
 ## Pogo-webserver
 Is a webserver that serves up a webpage what can be used to update the todo list
 
-##Building
+## Building
 can be done by running
 ```sh
 mkdir build
