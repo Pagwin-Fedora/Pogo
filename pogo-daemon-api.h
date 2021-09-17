@@ -43,7 +43,9 @@ enum MessageType{
 
 class InternalValue{
 	private:
-	InternalValue();
+	InternalValue(string);
+	InternalValue(double);
+	IntervalValue(obj_id);
 	public:
 	const std::optional<string> stringVal;
 	const std::optional<double> decimalVal;

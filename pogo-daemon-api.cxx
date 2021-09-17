@@ -1,7 +1,10 @@
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include <functional>
 #include <string>
 #include <numeric>
+#include <optional>
 #include "pogo-daemon-api.h"
 #include "string-utils.h"
 
@@ -150,4 +153,24 @@ string InternalValue::toString(){
 	if(this->decimalVal.has_value()) return std::to_string(this->decimalVal.value());
 	if(this->id.has_value()) return std::to_string(this->id.value());
 	return "";
+}
+enum parseVals{character,decimalPoint,digit};
+InternalValue InternalValue::parseString(string str){
+	InternalValue* ret;
+	std::list<parseVals> parsed;
+	std::transform(str.begin(),str.end(),parsed,[](char c){
+		if(std::isdigit(c)){
+			return parseVals::digit;
+		}
+		else if(c == '.'){
+			return parseVals::decimalPoint;
+		}
+		else{
+			return parseVals::character;
+		}
+	});
+	
+	if(std::all_of(parsed.begin(),parsed.end(),parseVals::digit)){
+		Int
+	}
 }
