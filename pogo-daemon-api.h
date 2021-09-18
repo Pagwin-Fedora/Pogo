@@ -45,7 +45,7 @@ class InternalValue{
 	private:
 	InternalValue(string);
 	InternalValue(double);
-	IntervalValue(obj_id);
+	InternalValue(obj_id);
 	public:
 	const std::optional<string> stringVal;
 	const std::optional<double> decimalVal;

@@ -156,7 +156,6 @@ string InternalValue::toString(){
 }
 enum parseVals{character,decimalPoint,digit};
 InternalValue InternalValue::parseString(string str){
-	InternalValue* ret;
 	std::list<parseVals> parsed;
 	std::transform(str.begin(),str.end(),parsed,[](char c){
 		if(std::isdigit(c)){
@@ -171,6 +170,16 @@ InternalValue InternalValue::parseString(string str){
 	});
 	
 	if(std::all_of(parsed.begin(),parsed.end(),parseVals::digit)){
-		Int
+		return (obj_id)std::stoi(str);
+	}
+	else if(std::none_of(parsed.begin(),parsed.end(),parseVals::character)){
+		return std::stod(str);
+	}
+	else{
+		return str;
 	}
 }
+
+InternalValue::InternalValue(string str) : stringVal(str){}
+InternalValue::InternalValue(double dec) : decimalVal(dec){}
+InternalValue::InternalValue(obj_id id) : id(id){}
