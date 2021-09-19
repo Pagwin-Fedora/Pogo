@@ -85,5 +85,5 @@ std::function<void(StateResponse)> addressExchange(std::function<StateResponse(M
 std::function<string(string)> contactExchange(std::function<void(string)>);
 
 namespace Pogo{
-	void init_frontend(string);
+	void init_frontend(std::vector<unsigned char>);
 }
