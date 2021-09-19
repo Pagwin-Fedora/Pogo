@@ -52,6 +52,11 @@ class InternalValue{
 	const std::optional<obj_id> id;
 	string toString();
 	static InternalValue parseString(string);
+	InternalValue operator=(InternalValue other){
+		if(other.id) return other.id.value();
+		else if(other.decimalVal) return other.decimalVal.value(); 
+		else return other.stringVal.value();
+	}
 };
 
 typedef std::pair<obj_id, InternalValue> StatePair;

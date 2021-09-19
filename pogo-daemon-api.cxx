@@ -1,10 +1,13 @@
 #include <algorithm>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <cctype>
 #include <cstdlib>
 #include <functional>
 #include <string>
 #include <numeric>
 #include <optional>
+#include <boost/algorithm/string.hpp>
 #include "pogo-daemon-api.h"
 #include "string-utils.h"
 
@@ -15,7 +18,7 @@ std::function<StateResponse(Message)> returnAddress;
 
 
 string contact(string message){
-	Message toForward = parseMessage(message);
+	Message toForward = Message::parseMessage(message);
 	return returnAddress(toForward).toString();
 }
 
@@ -33,11 +36,12 @@ std::function<void(StateResponse)> addressExchange(std::function<StateResponse(M
 }
 
 Message Message::parseMessage(string msgTxt){
-	auto split = nstd::str_split(msgTxt);
+	std::vector<string> splits;
+	boost::split(splits,msgTxt,boost::is_any_of(" "));
 	std::list<InternalValue> args;
-	std::transform(split.begin(),split.end(),args.begin(),InternalValue::parseString);
+	std::transform(splits.begin(),splits.end(),args.begin(),InternalValue::parseString);
 	Message* msg;
-	sswitch(split[0])
+	sswitch(splits[0])
 		scase("CREATE_ITEM",{
 			msg = new Message(MessageType::CREATE_ITEM,args);
 		})
@@ -183,3 +187,4 @@ InternalValue InternalValue::parseString(string str){
 InternalValue::InternalValue(string str) : stringVal(str){}
 InternalValue::InternalValue(double dec) : decimalVal(dec){}
 InternalValue::InternalValue(obj_id id) : id(id){}
+Message::Message(MessageType type, std::list<InternalValue> vals): type(type),args(vals){}
