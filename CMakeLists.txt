@@ -12,7 +12,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ""
     CONFIGURE_COMMAND ""
     BINARY_DIR "${CMAKE_SOURCE_DIR}/tcp_frontend"
-    BUILD_COMMAND cargo build COMMAND cargo build --release
+    BUILD_COMMAND cargo build -Z build-std --target x86_64-unknown-linux-gnu COMMAND cargo build --release -Z build-std --target x86_64-unknown-linux-gnu
     INSTALL_COMMAND ""
     LOG_BUILD ON
 )

@@ -26,11 +26,11 @@ void address(StateResponse update){
 	returnContact(update.toString());
 }
 
-contact_ret contactExchange(void(*return_contact)(string)){
+extern "C" contact_ret contactExchange(void(*return_contact)(string)){
 	returnContact = return_contact;
 	return contact;
 }
-addr_ret addressExchange(StateResponse(*ret_addr)(Message)){
+extern "C" addr_ret addressExchange(StateResponse(*ret_addr)(Message)){
 	returnAddress = ret_addr;
 	return address;
 }
