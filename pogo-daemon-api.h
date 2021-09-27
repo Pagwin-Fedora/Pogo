@@ -78,10 +78,14 @@ class StateResponse{
 	string toString();
 };
 
-
-
 Message parseMessage(string);
-std::function<void(StateResponse)> addressExchange(std::function<StateResponse(Message)>);
-std::function<string(string)> contactExchange(std::function<void(string)>);
 
-void init_frontend(size_t, unsigned char*);
+//ew typedefs
+typedef void (*addr_ret)(StateResponse);
+typedef string (*contact_ret)(string);
+
+extern "C" addr_ret addressExchange(StateResponse(*ret_addr)(Message));
+extern "C" contact_ret contactExchange(void(*return_contact)(string));
+extern "C"{
+	void init_frontend(size_t, unsigned char*);
+}

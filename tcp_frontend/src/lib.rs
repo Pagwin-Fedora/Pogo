@@ -17,6 +17,6 @@ pub extern fn init_frontend(len: size_t, config_buffer:*const c_uchar){
         println!("received from C++: {}", std::ffi::CStr::from_ptr((*contactExchange(func_ptr))(s.as_mut_str().as_ptr() as *const c_char)).to_str().unwrap());
     }
 }
-unsafe fn temp_func(stri: *const c_char){
+pub unsafe extern fn temp_func(stri: *const c_char){
     println!("called from C++ with {}", std::ffi::CStr::from_ptr(stri).to_str().unwrap());
 }

@@ -26,12 +26,12 @@ void address(StateResponse update){
 	returnContact(update.toString());
 }
 
-std::function<string(string)> contactExchange(std::function<void(string)> ret){
-	returnContact = ret;
+contact_ret contactExchange(void(*return_contact)(string)){
+	returnContact = return_contact;
 	return contact;
 }
-std::function<void(StateResponse)> addressExchange(std::function<StateResponse(Message)> addr){
-	returnAddress = addr;
+addr_ret addressExchange(StateResponse(*ret_addr)(Message)){
+	returnAddress = ret_addr;
 	return address;
 }
 
