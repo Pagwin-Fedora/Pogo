@@ -14,11 +14,12 @@ ExternalProject_Add(
     BINARY_DIR "${CMAKE_SOURCE_DIR}/tcp_frontend"
     BUILD_COMMAND cargo build COMMAND cargo build --release
     INSTALL_COMMAND ""
-    LOG_BUILD ON)
+    LOG_BUILD ON
+)
 add_dependencies(Pogo-daemon tcp_frontend)
 target_link_libraries(Pogo-daemon
-    debug "${CMAKE_SOURCE_DIR}/common-rust/target/debug/libtcp_frontend.a"
-    optimized "${CMAKE_SOURCE_DIR}/common-rust/target/release/libtcp_frontend.a"
+    debug "${CMAKE_SOURCE_DIR}/tcp_frontend/target/debug/libtcp_frontend.a"
+    optimized "${CMAKE_SOURCE_DIR}/tcp_frontend/target/release/libtcp_frontend.a"
     )
 
 

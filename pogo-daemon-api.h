@@ -84,4 +84,4 @@ Message parseMessage(string);
 std::function<void(StateResponse)> addressExchange(std::function<StateResponse(Message)>);
 std::function<string(string)> contactExchange(std::function<void(string)>);
 
-void init_frontend(size_t, unsigned char[]);
+void init_frontend(size_t, unsigned char*);

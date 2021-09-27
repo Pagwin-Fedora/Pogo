@@ -1,17 +1,22 @@
 extern crate libc;
-use libc::size_t;
+
+use libc::c_char;
 use libc::c_uchar;
+use libc::size_t;
 extern{
-    fn contactExchange(contactPoint:&dyn Fn(&str)-> ()) -> &dyn FnMut(&mut str) -> &str;
+    fn contactExchange(contactPoint:*const fn(*const c_char)-> ()) -> *const fn(*const c_char) -> *const c_char;
 }
-fn init_frontend(_len: size_t, _config_buffer:&[c_uchar]){
-    println!("pog!");
+
+#[no_mangle]
+pub extern fn init_frontend(len: size_t, config_buffer:*const c_uchar){
+   println!("pog!");
     let mut s:String = String::from("Hello From rust!");
-    let mut closure = |stri: &str|{
-                    println!("called from C++ with {}", stri);
-                };
+
     unsafe{
-        println!("received from C++: {}", contactExchange(&closure
-        )(s.as_mut_str()));
+        let func_ptr: *const fn(*const c_char) -> () = Box::into_raw(Box::new(temp_func)) as *const fn(*const c_char);
+        println!("received from C++: {}", std::ffi::CStr::from_ptr((*contactExchange(func_ptr))(s.as_mut_str().as_ptr() as *const c_char)).to_str().unwrap());
     }
+}
+unsafe fn temp_func(stri: *const c_char){
+    println!("called from C++ with {}", std::ffi::CStr::from_ptr(stri).to_str().unwrap());
 }
