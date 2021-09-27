@@ -1,4 +1,4 @@
-# Pogo
+# Pogo(WIP)
 This is a todo list with 3 components pogo-daemon, pogo-cli and pogo-webserver
 
 ## Pogo-daemon
