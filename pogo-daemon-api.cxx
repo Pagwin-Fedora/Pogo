@@ -7,6 +7,7 @@
 #include <string>
 #include <numeric>
 #include <optional>
+#include <iostream>
 #include <boost/algorithm/string.hpp>
 #include "pogo-daemon-api.h"
 #include "string-utils.h"
@@ -18,6 +19,7 @@ std::function<StateResponse(Message)> returnAddress;
 
 
 string contact(string message){
+	std::cout << message << " received!" << std::endl;
 	Message toForward = Message::parseMessage(message);
 	return returnAddress(toForward).toString();
 }
@@ -28,11 +30,11 @@ void address(StateResponse update){
 
 extern "C" contact_ret contactExchange(void(*return_contact)(string)){
 	returnContact = return_contact;
-	return contact;
+	return &contact;
 }
 extern "C" addr_ret addressExchange(StateResponse(*ret_addr)(Message)){
 	returnAddress = ret_addr;
-	return address;
+	return &address;
 }
 
 Message Message::parseMessage(string msgTxt){

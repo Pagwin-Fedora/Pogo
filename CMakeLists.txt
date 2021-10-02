@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(Pogo)
 
 include(ExternalProject)
+add_link_options(-lpthread -ldl)
 add_executable(Pogo-daemon pogo-daemon.cxx pogo-daemon-api.cxx)
 
 
@@ -12,7 +13,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ""
     CONFIGURE_COMMAND ""
     BINARY_DIR "${CMAKE_SOURCE_DIR}/tcp_frontend"
-    BUILD_COMMAND cargo build -Z build-std --target x86_64-unknown-linux-gnu COMMAND cargo build --release -Z build-std --target x86_64-unknown-linux-gnu
+    BUILD_COMMAND cargo build COMMAND cargo build --release
     INSTALL_COMMAND ""
     LOG_BUILD ON
 )
@@ -21,7 +22,6 @@ target_link_libraries(Pogo-daemon
     debug "${CMAKE_SOURCE_DIR}/tcp_frontend/target/debug/libtcp_frontend.a"
     optimized "${CMAKE_SOURCE_DIR}/tcp_frontend/target/release/libtcp_frontend.a"
     )
-
 
 #set C++ standard to the standard needed
 set_property(TARGET Pogo-daemon PROPERTY CXX_STANDARD 17)
