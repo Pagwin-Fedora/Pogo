@@ -19,6 +19,7 @@ std::function<StateResponse(Message)> returnAddress;
 
 
 string contact(string message){
+	std::cout << "contact called"<< std::endl;
 	std::cout << message << " received!" << std::endl;
 	Message toForward = Message::parseMessage(message);
 	return returnAddress(toForward).toString();
@@ -30,7 +31,7 @@ void address(StateResponse update){
 
 extern "C" contact_ret contactExchange(void(*return_contact)(string)){
 	returnContact = return_contact;
-	return &contact;
+	return contact;
 }
 extern "C" addr_ret addressExchange(StateResponse(*ret_addr)(Message)){
 	returnAddress = ret_addr;
