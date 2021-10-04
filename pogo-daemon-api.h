@@ -59,33 +59,35 @@ class InternalValue{
 	}
 };
 
-typedef std::pair<obj_id, InternalValue> StatePair;
-
+typedef struct {
+	obj_id id;
+	InternalValue value;
+} StatePair;
 class Message{
 	private:
 		MessageType type;
 		std::list<InternalValue> args;
 		Message(MessageType, std::list<InternalValue>);
 	public:
-		static Message parseMessage(string);
 		MessageType getType();
 };
 
-class StateResponse{
-	private:
-	std::list<StatePair> pairs;
-	public:
-	string toString();
-};
+typedef struct{
+	StatePair* pairs;
+	size_t num_of_pairs;
+} StateResponse;
+std::string stringFromStateResponse(StateResponse);
 
-Message parseMessage(string);
+//implemented in pogo-daemon-api.cxx and need to be exported
+extern "C" void StateUpdate(StateResponse);
+extern "C" void StringBack(char*);
+//needs to be exported because I don't wanna reimplement Message in whatever else needs to do stuff with Message but this may be in vain
+extern "C" Message* parseMessage(string);
 
-//ew typedefs
-typedef void (*addr_ret)(StateResponse);
-typedef string (*contact_ret)(char*);
-
-extern "C" addr_ret addressExchange(StateResponse(*ret_addr)(Message));
-extern "C" contact_ret contactExchange(void(*return_contact)(string));
+//implemented elsewhere and need to be imported
 extern "C"{
 	void init_frontend(size_t, unsigned char*);
+	//
+	StateResponse MessageReceive(Message*);
+	char* StringForward(char*);
 }

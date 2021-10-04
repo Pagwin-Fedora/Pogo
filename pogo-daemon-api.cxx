@@ -29,15 +29,6 @@ void address(StateResponse update){
 	returnContact(update.toString());
 }
 
-extern "C" contact_ret contactExchange(void(*return_contact)(string)){
-	returnContact = return_contact;
-	return contact;
-}
-extern "C" addr_ret addressExchange(StateResponse(*ret_addr)(Message)){
-	returnAddress = ret_addr;
-	return &address;
-}
-
 Message Message::parseMessage(string msgTxt){
 	std::vector<string> splits;
 	boost::split(splits,msgTxt,boost::is_any_of(" "));
@@ -146,7 +137,7 @@ Message Message::parseMessage(string msgTxt){
 		delete msg;
 	return deref;			
 }
-string StateResponse::toString(){
+std::string stringFromStateResponse(StateResponse serializing){
 	std::list<string> storage;
 	std::transform(std::begin(this->pairs),std::end(this->pairs),std::begin(storage),[](StatePair pair){
 				return std::to_string(pair.first) + " " + pair.second.toString();
