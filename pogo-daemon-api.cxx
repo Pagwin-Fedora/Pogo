@@ -18,7 +18,7 @@ std::function<void(string)> returnContact;
 std::function<StateResponse(Message)> returnAddress;
 
 
-string contact(string message){
+string contact(char* message){
 	std::cout << "contact called"<< std::endl;
 	std::cout << message << " received!" << std::endl;
 	Message toForward = Message::parseMessage(message);

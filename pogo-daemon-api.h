@@ -82,7 +82,7 @@ Message parseMessage(string);
 
 //ew typedefs
 typedef void (*addr_ret)(StateResponse);
-typedef string (*contact_ret)(string);
+typedef string (*contact_ret)(char*);
 
 extern "C" addr_ret addressExchange(StateResponse(*ret_addr)(Message));
 extern "C" contact_ret contactExchange(void(*return_contact)(string));
