@@ -1,6 +1,7 @@
 #include "pogo-daemon-api.h"
 #include <iostream>
 int main(){
-	std::cout << "this may go badly" << std::endl;
-	init_frontend(1, (unsigned char*)"a");
+	void* frontend_state = initFrontend(1, (unsigned char*)"a");
+	void* backend_state; // = initBackend(1, (unsigned char*)"a");
+	initMiddleware(frontend_state, backend_state);
 }

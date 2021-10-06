@@ -79,16 +79,17 @@ typedef struct{
 } StateResponse;
 std::string stringFromStateResponse(StateResponse);
 
+void initMiddleware(void* frontend_state, void* backend_state);
+
 //implemented in pogo-daemon-api.cxx and need to be exported
 extern "C" void StateUpdate(StateResponse);
-extern "C" void StringBack(char*);
+extern "C" char* StringForward(char*);
 //needs to be exported because I don't wanna reimplement Message in whatever else needs to do stuff with Message but this may be in vain
 extern "C" Message* parseMessage(string);
-
 //implemented elsewhere and need to be imported
 extern "C"{
-	void init_frontend(size_t, unsigned char*);
-	//
+	//pointers is for the state object the frontend will need in future func calls
+	void* initFrontend(size_t, unsigned char*);
 	StateResponse MessageReceive(Message*);
-	char* StringForward(char*);
+	void StringBack(void*,char*);
 }

@@ -16,7 +16,8 @@
 using std::string;
 
 
-
+void* frontend_state;
+void* backend_state;
 string contact(char* message){
 	std::cout << "contact called"<< std::endl;
 	std::cout << message << " received!" << std::endl;
@@ -27,7 +28,7 @@ string contact(char* message){
 }
 
 void address(StateResponse update){
-	StringForward(stringFromStateResponse(update).data());
+	StringBack(frontend_state,stringFromStateResponse(update).data());
 }
 
 Message* parseMessage(string msgTxt){
@@ -181,3 +182,13 @@ InternalValue::InternalValue(string str) : stringVal(str){}
 InternalValue::InternalValue(double dec) : decimalVal(dec){}
 InternalValue::InternalValue(obj_id id) : id(id){}
 Message::Message(MessageType type, std::list<InternalValue> vals): type(type),args(vals){}
+char* StringForward(char* str){
+	std::cout << str << std::endl;
+	//CHANGE THIS ASAP
+	return (char*)malloc(1);
+}
+
+void initMiddleware(void *f_state, void *b_state){
+	frontend_state = f_state;
+	backend_state = b_state;
+}
