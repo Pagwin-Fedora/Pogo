@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <functional>
+#include <memory>
 #include <string>
 #include <numeric>
 #include <optional>
@@ -14,22 +15,22 @@
 
 using std::string;
 
-std::function<void(string)> returnContact;
-std::function<StateResponse(Message)> returnAddress;
 
 
 string contact(char* message){
 	std::cout << "contact called"<< std::endl;
 	std::cout << message << " received!" << std::endl;
-	Message toForward = Message::parseMessage(message);
-	return returnAddress(toForward).toString();
+	Message* toForward = parseMessage(message);
+	string pass_message = stringFromStateResponse(MessageReceive(toForward));
+	delete toForward;
+	return pass_message;
 }
 
 void address(StateResponse update){
-	returnContact(update.toString());
+	StringForward(stringFromStateResponse(update).data());
 }
 
-Message Message::parseMessage(string msgTxt){
+Message* parseMessage(string msgTxt){
 	std::vector<string> splits;
 	boost::split(splits,msgTxt,boost::is_any_of(" "));
 	std::list<InternalValue> args;
@@ -133,15 +134,13 @@ Message Message::parseMessage(string msgTxt){
 			msg = new Message(MessageType::NONE,args);
 		}
 		close_sswitch
-		Message deref = *msg;
-		delete msg;
-	return deref;			
+	return msg;			
 }
 std::string stringFromStateResponse(StateResponse serializing){
 	std::list<string> storage;
-	std::transform(std::begin(this->pairs),std::end(this->pairs),std::begin(storage),[](StatePair pair){
-				return std::to_string(pair.first) + " " + pair.second.toString();
-			});
+	for(size_t i = 0;i<serializing.num_of_pairs;i++){
+		storage.push_back(std::to_string(serializing.pairs[i].id) + " " + serializing.pairs[i].value.toString());
+	}
 	return std::reduce(std::next(std::begin(storage)),std::end(storage),storage.front(),[](string first, string second){
 				return first+"\n"+second;
 			});

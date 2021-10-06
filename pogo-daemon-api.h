@@ -1,3 +1,4 @@
+#include <memory>
 #include <string>
 #include <list>
 #include <optional>
@@ -67,8 +68,8 @@ class Message{
 	private:
 		MessageType type;
 		std::list<InternalValue> args;
-		Message(MessageType, std::list<InternalValue>);
 	public:
+		Message(MessageType, std::list<InternalValue>);
 		MessageType getType();
 };
 
