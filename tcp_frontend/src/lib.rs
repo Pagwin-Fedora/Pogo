@@ -33,13 +33,15 @@ impl From<*const c_uchar> for ConfigInfo {
 #[derive(Default)]
 pub struct FrontendState{
     conns:Vec<TcpStream>,
-    config:ConfigInfo
+    config:ConfigInfo,
+    tokio_runtime:Option<tokio::runtime::Runtime>
 }
 #[no_mangle]
 pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const Mutex<FrontendState>{
     let state_ptr:Arc<Mutex<FrontendState>> = Arc::default();
     let mut state = state_ptr.lock().unwrap();
     state.config = ConfigInfo::from(config_buffer);
+    state.tokio_runtime = Some(Runtime::new().unwrap());
     drop(state);
     //somehow I need to do stuff with state here with thread safety and I need to return state when
     //I'm done with this function, fuck
