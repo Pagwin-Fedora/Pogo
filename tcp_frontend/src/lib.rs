@@ -6,8 +6,9 @@ use libc::size_t;
 use std::default::Default;
 use std::ffi::{CStr};
 use std::io::prelude::*;
-use std::net::{TcpStream,TcpListener};
+use tokio::net::{TcpStream,TcpListener};
 use std::sync::{Arc,Mutex};
+use tokio::runtime::Runtime;
 extern{
     fn StringForward(data:*mut c_char) -> *mut c_char;
 }
@@ -43,10 +44,11 @@ pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const 
     //somehow I need to do stuff with state here with thread safety and I need to return state when
     //I'm done with this function, fuck
     let ptr_clone = state_ptr.clone();
-    std::thread::spawn(move ||{
+    tokio::spawn(connection_lookout());
+    async {
         //FIXME: state never gets unlocked which is an issue
         let state = ptr_clone.lock().unwrap();
-        let listener = TcpListener::bind(format!("127.0.0.1:{}",state.config.port)).unwrap();
+        let listener = TcpListener::bind(format!("127.0.0.1:{}",state.config.port)).await.unwrap();
         drop(state);
         for result in listener.incoming(){
             match result {
@@ -61,11 +63,15 @@ pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const 
             }
 
         }
-    });
+    };
 
     //to avoid state immediately getting deallocated when we return assuming that's a potential problem it was originally mem::forgot en but apparently that's a no from rust
     
     return Arc::<Mutex<FrontendState>>::into_raw(state_ptr)
+}
+
+async fn connection_lookout(){
+
 }
 #[allow(non_snake_case)]
 #[no_mangle]
