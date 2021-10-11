@@ -4,10 +4,10 @@ use libc::c_char;
 use libc::c_uchar;
 use libc::size_t;
 use std::default::Default;
-use std::ffi::{CStr,CString};
+use std::ffi::{CStr};
 use std::io::prelude::*;
 use std::net::{TcpStream,TcpListener};
-use std::sync::{Arc,Mutex,MutexGuard};
+use std::sync::{Arc,Mutex};
 extern{
     fn StringForward(data:*mut c_char) -> *mut c_char;
 }
@@ -52,8 +52,10 @@ pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const 
             match result {
                 Ok(mut conn) => {
                     negotiate(&mut conn);
+
                     let mut state = ptr_clone.lock().unwrap();
                     state.conns.push(conn);
+
                 },
                 Err(_) => continue
             }
@@ -61,14 +63,19 @@ pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const 
         }
     });
 
-    //to avoid state immediately getting deallocated when we return assuming that's a potential problem
+    //to avoid state immediately getting deallocated when we return assuming that's a potential problem it was originally mem::forgot en but apparently that's a no from rust
     
-    return Arc::<Mutex<FrontendState>>::into_raw(state_ptr);
+    return Arc::<Mutex<FrontendState>>::into_raw(state_ptr)
 }
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern fn StringBack(_state:*mut FrontendState,stri: *const c_char){
-    println!("{}",CStr::from_ptr(stri).to_str().unwrap());
+pub unsafe extern fn StringBack(state:*mut Mutex<FrontendState>,stri: *const c_char){
+    let mut state = (*state).lock().unwrap();
+    let data = CStr::from_ptr(stri);
+
+    for mut connection in &state.conns {
+        connection.write_all(data.to_bytes()).unwrap();
+    }
 }
 #[allow(non_snake_case)]
 #[no_mangle]
