@@ -42,47 +42,40 @@ pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const 
     let mut state = state_ptr.lock().unwrap();
     state.config = ConfigInfo::from(config_buffer);
     state.tokio_runtime = Some(Runtime::new().unwrap());
-    drop(state);
-    //somehow I need to do stuff with state here with thread safety and I need to return state when
-    //I'm done with this function, fuck
-    let ptr_clone = state_ptr.clone();
-    tokio::spawn(connection_lookout());
-    async {
-        //FIXME: state never gets unlocked which is an issue
-        let state = ptr_clone.lock().unwrap();
-        let listener = TcpListener::bind(format!("127.0.0.1:{}",state.config.port)).await.unwrap();
-        drop(state);
-        for result in listener.incoming(){
-            match result {
-                Ok(mut conn) => {
-                    negotiate(&mut conn);
-
-                    let mut state = ptr_clone.lock().unwrap();
-                    state.conns.push(conn);
-
-                },
-                Err(_) => continue
-            }
-
-        }
-    };
+    tokio::spawn(connection_lookout(state_ptr,state.config.port));
 
     //to avoid state immediately getting deallocated when we return assuming that's a potential problem it was originally mem::forgot en but apparently that's a no from rust
     
     return Arc::<Mutex<FrontendState>>::into_raw(state_ptr)
 }
 
-async fn connection_lookout(){
+async fn connection_lookout(state_ptr:Arc<Mutex<FrontendState>>,port:u32){
+        let listener = TcpListener::bind(format!("127.0.0.1:{}",port)).await.unwrap();
+        loop{
+            let result = listener.accept().await;
+            match result {
+                Ok((mut conn,addr)) => {
+                    negotiate(&mut conn);
 
+                    push_conn(&state_ptr,conn)
+                },
+                Err(_) => continue
+            }
+
+        }
+}
+fn push_conn(state_ptr:&Arc<Mutex<FrontendState>>,conn:TcpStream){
+    state_ptr.lock().unwrap().conns.push(conn);
 }
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern fn StringBack(state:*mut Mutex<FrontendState>,stri: *const c_char){
-    let mut state = (*state).lock().unwrap();
+pub unsafe extern fn StringBack(state_ptr:*mut Mutex<FrontendState>,stri: *const c_char){
+    let state = (*state_ptr).lock().unwrap();
     let data = CStr::from_ptr(stri);
-
     for mut connection in &state.conns {
-        connection.write_all(data.to_bytes()).unwrap();
+        state.tokio_runtime.unwrap().spawn( async {
+            connection.writable().await;
+        });
     }
 }
 #[allow(non_snake_case)]
