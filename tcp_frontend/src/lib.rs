@@ -42,7 +42,8 @@ pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const 
     let mut state = state_ptr.lock().unwrap();
     state.config = ConfigInfo::from(config_buffer);
     state.tokio_runtime = Some(Runtime::new().unwrap());
-    tokio::spawn(connection_lookout(state_ptr,state.config.port));
+    tokio::spawn(connection_lookout(state_ptr.clone(),state.config.port));
+    drop(state);
 
     //to avoid state immediately getting deallocated when we return assuming that's a potential problem it was originally mem::forgot en but apparently that's a no from rust
     
@@ -54,10 +55,10 @@ async fn connection_lookout(state_ptr:Arc<Mutex<FrontendState>>,port:u32){
         loop{
             let result = listener.accept().await;
             match result {
-                Ok((mut conn,addr)) => {
-                    negotiate(&mut conn);
+                Ok((mut connection,_addr)) => {
+                    negotiate(&mut connection);
 
-                    push_conn(&state_ptr,conn)
+                    push_conn(&state_ptr,connection);
                 },
                 Err(_) => continue
             }
@@ -69,17 +70,26 @@ fn push_conn(state_ptr:&Arc<Mutex<FrontendState>>,conn:TcpStream){
 }
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern fn StringBack(state_ptr:*mut Mutex<FrontendState>,stri: *const c_char){
+pub unsafe extern fn StringBack(state_ptr:*mut Mutex<FrontendState>,message: *const c_char){
     let state = (*state_ptr).lock().unwrap();
-    let data = CStr::from_ptr(stri);
-    for mut connection in &state.conns {
+    let data = CStr::from_ptr(message);
+    //I hate th is work around but I can't think ofa  better solution
+    let num_of_conns = state.conns.len();
+    for mut connection_index in 0..num_of_conns {
         state.tokio_runtime.unwrap().spawn( async {
+            let state_ptr = state_ptr;
+            let state = (*state_ptr).lock().unwrap();
+            let connection = state.conns[connection_index];
+            drop(state);
             connection.writable().await;
         });
     }
 }
+
 #[allow(non_snake_case)]
 #[no_mangle]
+///This is a stub to avoid a linker error, it should be deleted when the state storage backend is
+///being implemented
 pub unsafe extern fn MessageReceive(_msg_ptr:*mut ()){
     println!("Message received but we don't care");
 }
