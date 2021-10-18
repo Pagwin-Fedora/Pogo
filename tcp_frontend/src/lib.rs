@@ -4,11 +4,13 @@ use libc::c_char;
 use libc::c_uchar;
 use libc::size_t;
 use std::default::Default;
-use std::ffi::{CStr};
+use std::ffi::CStr;
 use std::io::prelude::*;
+use std::iter::FromFn;
 use tokio::net::{TcpStream,TcpListener};
 use std::sync::{Arc,Mutex};
 use tokio::runtime::Runtime;
+use std::sync::mpsc;
 extern{
     fn StringForward(data:*mut c_char) -> *mut c_char;
 }
@@ -74,15 +76,19 @@ pub unsafe extern fn StringBack(state_ptr:*mut Mutex<FrontendState>,message: *co
     let state = (*state_ptr).lock().unwrap();
     let data = CStr::from_ptr(message);
     //I hate th is work around but I can't think ofa  better solution
+    let (pipe_in,pipe_out) = mpsc::channel::<*mut Mutex<FrontendState>>();
+    let pipe_mutex = Mutex::from(pipe_out);
     let num_of_conns = state.conns.len();
     for mut connection_index in 0..num_of_conns {
         state.tokio_runtime.unwrap().spawn( async {
-            let state_ptr = state_ptr;
-            let state = (*state_ptr).lock().unwrap();
-            let connection = state.conns[connection_index];
-            drop(state);
-            connection.writable().await;
+            //let pipe_out = pipe_mutex.lock().unwrap();
+            //let state_ptr = pipe_out.recv().unwrap();
+            //let state = (*state_ptr).lock().unwrap();
+            //let connection = state.conns[connection_index];
+            //drop(state);
+            //connection.writable().await;
         });
+        pipe_in.send(state_ptr).unwrap();
     }
 }
 
