@@ -3,6 +3,7 @@ extern crate libc;
 use libc::c_char;
 use libc::c_uchar;
 use libc::size_t;
+use tokio::runtime::Runtime;
 use std::default::Default;
 use std::ffi::CStr;
 use std::io::prelude::*;
@@ -25,6 +26,8 @@ impl Default for ConfigInfo{
         }
     }
 }
+unsafe impl Sync for ConfigInfo{}
+
 impl From<*const c_uchar> for ConfigInfo {
     fn from(bytes:*const c_uchar)->Self{
         //TODO: actually implement from here
@@ -33,69 +36,78 @@ impl From<*const c_uchar> for ConfigInfo {
         }
     }
 }
-#[derive(Default)]
 pub struct FrontendState{
-    conns:Vec<TcpStream>,
+    conns:Vec<tokio::net::TcpStream>,
     config:ConfigInfo,
+    runtime:Runtime
+}
+impl FrontendState{
+    fn new(config:ConfigInfo,runtime:Runtime) -> Self{
+        FrontendState{config,runtime,conns:Vec::default()}
+    }
 }
 #[no_mangle]
-pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const Mutex<FrontendState>{
-    let state_ptr:Arc<Mutex<FrontendState>> = Arc::default();
-    let mut state = state_ptr.lock().unwrap();
-    state.config = ConfigInfo::from(config_buffer);
-    std::mem::forget(tokio::runtime::Builder::new_multi_thread()
+pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const FrontendState{
+    let config = ConfigInfo::from(config_buffer);
+    let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
-        .unwrap()
-        .enter()
-        );
-    
-    tokio::spawn(connection_lookout(state_ptr.clone(),state.config.port));
-    drop(state);
+        .unwrap();
+
+    let mut state = FrontendState::new(config,runtime);
+    let ptr = std::rc::Rc::new(state);
+    state.runtime.spawn(connection_lookout(ptr.clone()));
     
     //to avoid state immediately getting deallocated when we return assuming that's a potential problem it was originally mem::forgot en but apparently that's a no from rust
     
-    return Arc::<Mutex<FrontendState>>::into_raw(state_ptr)
+    return std::rc::Rc::into_raw(ptr)
 }
 
-async fn connection_lookout(state_ptr:Arc<Mutex<FrontendState>>,port:u32){
-        let listener = TcpListener::bind(format!("127.0.0.1:{}",port)).await.unwrap();
+async fn connection_lookout(state: std::rc::Rc<FrontendState>){
+        let listener = TcpListener::bind(format!("127.0.0.1:{}",state.config.port)).await.unwrap();
         loop{
             let result = listener.accept().await;
             match result {
                 Ok((mut connection,_addr)) => {
                     negotiate(&mut connection);
 
-                    push_conn(&state_ptr,connection);
+                    state.conns.push(connection);
                 },
                 Err(_) => continue
             }
 
         }
 }
-fn push_conn(state_ptr:&Arc<Mutex<FrontendState>>,conn:TcpStream){
-    state_ptr.lock().unwrap().conns.push(conn);
-}
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern fn StringBack(state_ptr:*mut Mutex<FrontendState>,message: *const c_char){
-    let state = (*state_ptr).lock().unwrap();
-    let _data = CStr::from_ptr(message);
-    //I hate th is work around but I can't think ofa  better solution
-    let (pipe_in,pipe_out) = mpsc::channel::<*mut Mutex<FrontendState>>();
-    let _pipe_mutex = Mutex::from(pipe_out);
-    let num_of_conns = state.conns.len();
-    for _connection_index in 0..num_of_conns {
-        tokio::spawn( async {
-            //let pipe_out = pipe_mutex.lock().unwrap();
-            //let state_ptr = pipe_out.recv().unwrap();
-            //let state = (*state_ptr).lock().unwrap();
-            //let connection = state.conns[connection_index];
-            //drop(state);
-            //connection.writable().await;
-        });
-        pipe_in.send(state_ptr).unwrap();
-    }
+pub unsafe extern fn StringBack(state_ptr:*const Arc<Mutex<FrontendState>>,message: *const c_char){
+    let state_ptr = (*state_ptr).clone();
+    let state = state_ptr.lock().unwrap();
+    let message = CStr::from_ptr(message).to_bytes();
+    //state.runtime.spawn(async move {
+    //    let state = inner_ptr.lock().unwrap();
+    //    for i in 0..state.conns.len(){
+    //        let i_ptr = inner_ptr.clone();
+    //        state.conns[i].writable();
+    //    }
+    //});
+//    let state = (*state_ptr).lock().unwrap();
+//    let _data = CStr::from_ptr(message);
+//    //I hate th is work around but I can't think ofa  better solution
+//    let (pipe_in,pipe_out) = mpsc::channel::<*mut Mutex<FrontendState>>();
+//    let _pipe_mutex = Mutex::from(pipe_out);
+//    let num_of_conns = state.conns.len();
+//    for _connection_index in 0..num_of_conns {
+//        tokio::spawn( async {
+//            let pipe_out = _pipe_mutex.lock().unwrap();
+//            //let state_ptr = pipe_out.recv().unwrap();
+//            //let state = (*state_ptr).lock().unwrap();
+//            //let connection = state.conns[connection_index];
+//            //drop(state);
+//            //connection.writable().await;
+//        });
+//        pipe_in.send(state_ptr).unwrap();
+//    }
 }
 
 #[allow(non_snake_case)]
