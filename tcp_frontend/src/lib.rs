@@ -37,7 +37,7 @@ impl From<*const c_uchar> for ConfigInfo {
     }
 }
 pub struct FrontendState{
-    conns:Vec<tokio::net::TcpStream>,
+    conns:Vec<Arc<tokio::net::TcpStream>>,
     config:ConfigInfo,
     runtime:Runtime
 }
@@ -80,34 +80,19 @@ async fn connection_lookout(state: std::rc::Rc<FrontendState>){
 }
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern fn StringBack(state_ptr:*const Arc<Mutex<FrontendState>>,message: *const c_char){
-    let state_ptr = (*state_ptr).clone();
-    let state = state_ptr.lock().unwrap();
-    let message = CStr::from_ptr(message).to_bytes();
-    //state.runtime.spawn(async move {
-    //    let state = inner_ptr.lock().unwrap();
-    //    for i in 0..state.conns.len(){
-    //        let i_ptr = inner_ptr.clone();
-    //        state.conns[i].writable();
-    //    }
-    //});
-//    let state = (*state_ptr).lock().unwrap();
-//    let _data = CStr::from_ptr(message);
-//    //I hate th is work around but I can't think ofa  better solution
-//    let (pipe_in,pipe_out) = mpsc::channel::<*mut Mutex<FrontendState>>();
-//    let _pipe_mutex = Mutex::from(pipe_out);
-//    let num_of_conns = state.conns.len();
-//    for _connection_index in 0..num_of_conns {
-//        tokio::spawn( async {
-//            let pipe_out = _pipe_mutex.lock().unwrap();
-//            //let state_ptr = pipe_out.recv().unwrap();
-//            //let state = (*state_ptr).lock().unwrap();
-//            //let connection = state.conns[connection_index];
-//            //drop(state);
-//            //connection.writable().await;
-//        });
-//        pipe_in.send(state_ptr).unwrap();
-//    }
+pub unsafe extern fn StringBack(state_ptr:*mut Arc<Mutex<FrontendState>>,message: *const c_char){
+    let ptr = (*state_ptr).clone();
+    let state = ptr.lock().unwrap();
+    let _data = CStr::from_ptr(message);
+    let num_of_conns = state.conns.len();
+    for connection_index in 0..num_of_conns {
+        let i_ptr = ptr.clone();
+        let t = state.conns[connection_index].clone();
+        tokio::spawn( async move {
+            t.writable().await;
+            t.try_write(_data.to_bytes());
+        });
+    }
 }
 
 #[allow(non_snake_case)]
