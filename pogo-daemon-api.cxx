@@ -10,6 +10,8 @@
 #include <optional>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <thread>
+#include <chrono>
 #include "pogo-daemon-api.h"
 #include "string-utils.h"
 
@@ -191,4 +193,5 @@ char* StringForward(char* str){
 void initMiddleware(void *f_state, void *b_state){
 	frontend_state = f_state;
 	backend_state = b_state;
+	while(true) std::this_thread::sleep_for(std::chrono::minutes(1));
 }

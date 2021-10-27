@@ -46,7 +46,7 @@ impl FrontendState{
 }
 #[no_mangle]
 pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const Mutex<FrontendState>{
-    let config = ConfigInfo::from(config_buffer);
+    let config = ConfigInfo::default();//ConfigInfo::from(config_buffer);
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
