@@ -1,4 +1,5 @@
 
+use futures::lock::MutexGuard;
 use libc::c_char;
 use libc::c_uchar;
 use libc::size_t;
@@ -34,8 +35,17 @@ impl From<*const c_uchar> for ConfigInfo {
         }
     }
 }
+struct ConnectionContainer{
+    alive:bool,
+    conn:tokio::net::TcpStream
+}
+impl ConnectionContainer{
+    fn new(conn:tokio::net::TcpStream)->Self{
+        return ConnectionContainer{alive:true,conn};
+    }
+}
 pub struct FrontendState{
-    conns:Vec<Arc<Mutex<tokio::net::TcpStream>>>,
+    conns:Vec<Arc<Mutex<ConnectionContainer>>>,
     config:ConfigInfo,
     runtime:Runtime
 }
@@ -67,7 +77,20 @@ pub extern fn initFrontend(_len: size_t, config_buffer:*const c_uchar)-> *const 
     
     return Arc::into_raw(ptr)
 }
-
+async fn dead_streams_cleaner(state_ptr:Arc<Mutex<FrontendState>>){
+    loop {
+//cleaner runs on regular intervals rather than whenever we need to deal with the streams to avoid having to think about how to avoid deadlock
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        let mut state = state_ptr.lock().await;
+        for i in 0..state.conns.len() {
+            let unnecessary_var = state.conns[i].clone();
+            let maybe_conn = unnecessary_var.lock().await;
+            if !maybe_conn.alive{
+                state.conns.remove(i);
+            }
+        }
+    }
+}
 async fn connection_lookout(state_ptr: Arc<Mutex<FrontendState>>){
     let mut state = state_ptr.lock().await;
     let listener = TcpListener::bind(format!("127.0.0.1:{}",state.config.port)).await.unwrap();
@@ -76,26 +99,29 @@ async fn connection_lookout(state_ptr: Arc<Mutex<FrontendState>>){
         match result {
             Ok((mut connection,_addr)) => {
                 negotiate(&mut connection);
-                let connection_ptr = Arc::new(Mutex::new(connection));
+                let connection_ptr = Arc::new(Mutex::new(ConnectionContainer::new(connection)));
                 let ptr_clone = connection_ptr.clone();
                 state.runtime.spawn(async move{
                     loop{
-                        let connection = ptr_clone.lock().await;
+                        let mut c = ptr_clone.lock().await;
+                        let connection = &c.conn;
                         connection.readable().await.unwrap();
                         let mut buf = [0_u8;1024];
-                        let byte_count = connection.try_read(&mut buf).unwrap();
-                        let mut new_buf = [0_u8;1025];
-                        let buf = if byte_count == 1024 {
-                            for i in 0..1024 {
-                                new_buf[i] = buf[i];
-                            }
-                            new_buf[1024] = 0;
-                            &new_buf as &[u8]
-                        } else{
-                            &buf as &[u8]
+                        let byte_count = match connection.try_read(&mut buf){
+                            Ok(count) => {
+                                if count != 0 {
+                                    count
+                                }
+                                else {
+                                    c.alive = false;
+                                    break;
+                                }
+                            },
+                            Err(_)=> {continue;}
                         };
+
                         unsafe{
-                            let cstr = CString::new(buf).unwrap();
+                            let cstr = CString::new(&buf[0..byte_count]).unwrap();
                             StringForward(cstr.as_ptr());
                             
                         }
@@ -114,13 +140,13 @@ async fn connection_lookout(state_ptr: Arc<Mutex<FrontendState>>){
 pub unsafe extern fn StringBack(state_ptr:*mut Arc<Mutex<FrontendState>>,message: *const c_char){
     let ptr = (*state_ptr).clone();
     let state = futures::executor::block_on((ptr).lock());
-
+    
     let data = CStr::from_ptr(message).to_bytes();
     for connection_index in 0..state.conns.len(){
         let ptrc = ptr.clone();
         tokio::spawn( async move {
             let state = ptrc.lock().await;
-            let connection = state.conns[connection_index].lock().await;
+            let connection = &state.conns[connection_index].lock().await.conn;
             connection.writable().await.unwrap();
             //TODO: might need to do stuff to make sure all the data gets pushed through
             connection.try_write(data).unwrap();
