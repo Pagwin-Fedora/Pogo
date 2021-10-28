@@ -152,13 +152,6 @@ pub unsafe extern fn StringBack(state_ptr:*mut Arc<Mutex<FrontendState>>,message
     }
 }
 
-#[allow(non_snake_case)]
-#[no_mangle]
-///This is a stub to avoid a linker error, it should be deleted when the state storage backend is
-///being implemented
-pub unsafe extern fn MessageReceive(_msg_ptr:*mut ()){
-    println!("Message received but we don't care");
-}
 ///Every tcp socket is passed to this function upon connection to handle initial communication
 fn negotiate(_conn:&mut TcpStream){
        

@@ -21,18 +21,6 @@ using std::string;
 
 void* frontend_state;
 void* backend_state;
-string contact(char* message){
-	std::cout << "contact called"<< std::endl;
-	std::cout << message << " received!" << std::endl;
-	Message* toForward = parseMessage(message);
-	string pass_message = stringFromStateResponse(MessageReceive(toForward));
-	delete toForward;
-	return pass_message;
-}
-
-void address(StateResponse update){
-	StringBack(frontend_state,stringFromStateResponse(update).data());
-}
 
 Message* parseMessage(string msgTxt){
 	std::vector<string> splits;
@@ -185,6 +173,7 @@ InternalValue::InternalValue(string str) : stringVal(str){}
 InternalValue::InternalValue(double dec) : decimalVal(dec){}
 InternalValue::InternalValue(obj_id id) : id(id){}
 Message::Message(MessageType type, std::list<InternalValue> vals): type(type),args(vals){}
+
 char* StringForward(char* str){
 	std::cout << str << std::endl;
 	StateResponse rawResponse = MessageReceive(backend_state, parseMessage(str));
