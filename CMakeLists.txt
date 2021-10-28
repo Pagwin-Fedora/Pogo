@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
-project(Pogo)
+project(Pogo-daemon)
 
 include(ExternalProject)
+#needed for rust and go linkage because reasons
 add_link_options(-lpthread -ldl)
 add_executable(Pogo-daemon pogo-daemon.cxx pogo-daemon-api.cxx)
 
 
-# rust tcp fronteTnd build stuff
+# rust tcp frontend build stuff
 set_directory_properties(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/Rust)
 ExternalProject_Add(
     tcp_frontend
@@ -22,6 +23,12 @@ target_link_libraries(Pogo-daemon
     debug "${CMAKE_SOURCE_DIR}/tcp_frontend/target/debug/libtcp_frontend.a"
     optimized "${CMAKE_SOURCE_DIR}/tcp_frontend/target/release/libtcp_frontend.a"
     )
+
+
+# go postgres backend build stuff
+add_subdirectory(postgres_backend)
+
+target_link_libraries(Pogo-daemon postgres_backend)
 
 #set C++ standard to the standard needed
 set_property(TARGET Pogo-daemon PROPERTY CXX_STANDARD 17)

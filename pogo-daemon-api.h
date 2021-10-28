@@ -62,6 +62,7 @@ class InternalValue{
 
 typedef struct {
 	obj_id id;
+	AttrType type;
 	InternalValue value;
 } StatePair;
 class Message{
@@ -91,5 +92,6 @@ extern "C"{
 	//pointers is for the state object the frontend will need in future func calls
 	void* initFrontend(size_t, unsigned char*);
 	StateResponse MessageReceive(void* backend_state, Message*);
+	void* initBackend(size_t, unsigned char*);
 	void StringBack(void* frontend_state,char*);
 }
