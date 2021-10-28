@@ -1,5 +1,3 @@
-
-use futures::lock::MutexGuard;
 use libc::c_char;
 use libc::c_uchar;
 use libc::size_t;

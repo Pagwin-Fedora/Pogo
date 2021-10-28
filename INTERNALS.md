@@ -11,14 +11,11 @@ Messages are deliminated by either a connection end or a null byte. The followin
 LIST_ITEM_IDS
 GET_GROUPS (item_id)
 GET_PARENTS (item_id)
-GET_SIBLINGS (item_id)
 GET_CHILDREN (item_id)
-GET_CHILDREN_REC (item_id)
 GET_PROGRESS (item_id)
 GET_MESSAGE (item_id)
 GET_GROUP_IDS
 GET_GROUP_MEMBERS (group_id)
-GET_GROUP_MEMBERS_REC (group_id)
 GET_METADATA (id)
 ```
 ### Internal state updates

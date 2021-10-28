@@ -90,6 +90,6 @@ extern "C" Message* parseMessage(string);
 extern "C"{
 	//pointers is for the state object the frontend will need in future func calls
 	void* initFrontend(size_t, unsigned char*);
-	StateResponse MessageReceive(Message*);
-	void StringBack(void*,char*);
+	StateResponse MessageReceive(void* backend_state, Message*);
+	void StringBack(void* frontend_state,char*);
 }

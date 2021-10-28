@@ -3,6 +3,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <cctype>
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <string>
@@ -186,8 +187,12 @@ InternalValue::InternalValue(obj_id id) : id(id){}
 Message::Message(MessageType type, std::list<InternalValue> vals): type(type),args(vals){}
 char* StringForward(char* str){
 	std::cout << str << std::endl;
-	//CHANGE THIS ASAP
-	return (char*)malloc(1);
+	StateResponse rawResponse = MessageReceive(backend_state, parseMessage(str));
+	string strResponse = stringFromStateResponse(rawResponse);
+	//MEMORY LEAK HERE OH GOD
+	char* ret = (char*) malloc(strResponse.length()+1);
+	std::strcpy(strResponse.data(),ret);
+	return ret;
 }
 
 void initMiddleware(void *f_state, void *b_state){
