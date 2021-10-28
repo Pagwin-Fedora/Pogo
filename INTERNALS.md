@@ -7,7 +7,7 @@ by default the Pogo daemon takes in communications to change internal state thro
 
 ## State messages
 
-to request information the UUID and the attribute are given to update information the UUID the attribute and the new value are given for attributes which can have multiple values all of the values which are to be set in the attribute are given in a space separated manner this is the case going from client to server and from server to client although the server should probably not be requesting info from the client the only case a UUID is not given is when requesting a list of UUIDs for a type of object a message can be terminated with a new line, a null byte or closing the connection
+to request information the UUID and the attribute(case-insensitive) are given to update information the UUID the attribute(case-insensitive) and the new value are given for attributes which can have multiple values all of the values which are to be set in the attribute are given in a space separated manner this is the case going from client to server and from server to client although the server should probably not be requesting info from the client the only case a UUID is not given is when requesting a list of UUIDs for a type of object a message can be terminated with a new line, a null byte or closing the connection
 
 there are 2 types of objects which can be processed, items and groups, here are the attributes for each with their type
 
