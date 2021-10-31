@@ -62,7 +62,7 @@ class InternalValue{
 
 typedef struct {
 	obj_id id;
-	AttrType type;
+	//AttrType type;
 	InternalValue value;
 } StatePair;
 class Message{
