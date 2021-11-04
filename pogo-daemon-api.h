@@ -7,72 +7,32 @@
 using std::string;
 
 typedef uint64_t obj_id;
-enum MessageType{
-	CREATE_ITEM,
-	DEL_ITEM,
-	DEL_ITEM_REC,
-	CREATE_GROUP,
-	DEL_GROUP,
-	DEL_GROUP_REC,
-	ADD_GROUP,
-	ADD_GROUP_REC,
-	REM_GROUP,
-	REM_GROUP_REC,
-	ADOPT,
-	DISOWN,
-	SET_MESSAGE,
-	SET_PROGRESS,
-	SET_METADATA,
-	SET_ITEM_NAME,
-	SET_GROUP_NAME,
-	LIST_ITEM_IDS,
-	GET_GROUPS,
-	GET_PARENTS,
-	GET_SIBLINGS,
-	GET_CHILDREN,
-	GET_CHILDREN_REC,
-	GET_PROGRESS,
-	GET_MESSAGE,
-	GET_GROUP_IDS,
-	GET_GROUP_MEMBERS,
-	GET_GROUP_MEMBERS_REC,
-	GET_METADATA,
-	GET_ITEM_NAME,
-	GET_GROUP_NAME,
-	NONE
-};
+typedef unsigned int TransactionAttribute;
+const TransactionAttribute
+	ITEM = 0,//with no arg creates an item with an item id as an arg deletes the item
+	ITEMS = 1,// lists out all items when given no args and when given a list of item ids(existing or not) will delete the items that fail to be a part of the inner join of the ids provided and the existing ids
+	NAME = 2,// gives the name of an item when given it's id and changes the name of the item if given an id and a new name
+	DESCRIPTION = 3,// gives the description of an item when given it's id and changes the description of the item if given an id and a new description
+	PARENTS = 4,// gives the ids of the parent items when given an item id and changes the items parents when given an id to change the parents of list of new parent item ids
+	CHILDREN = 5,// same as parents but for children
+	PROGRESS = 6,// gives the fraction describing the current progress when given an item id and sets the fraction when given an item id a numerator and a denominator
+	METADATA = 7;// gives the metadata of an item when given it's id and changes the metadata of the item if given an id and new metadata
 
-class InternalValue{
-	private:
-	InternalValue(string);
-	InternalValue(double);
-	InternalValue(obj_id);
-	public:
-	const std::optional<string> stringVal;
-	const std::optional<double> decimalVal;
-	const std::optional<obj_id> id;
-	string toString();
-	static InternalValue parseString(string);
-	InternalValue operator=(InternalValue other){
-		if(other.id) return other.id.value();
-		else if(other.decimalVal) return other.decimalVal.value(); 
-		else return other.stringVal.value();
-	}
-};
-
+typedef struct InternalValue {
+	TransactionAttribute type;
+} InternalValue;
 typedef struct {
 	obj_id id;
 	//AttrType type;
 	InternalValue value;
 } StatePair;
-class Message{
-	private:
-		MessageType type;
-		std::list<InternalValue> args;
-	public:
-		Message(MessageType, std::list<InternalValue>);
-		MessageType getType();
-};
+
+typedef struct Message{
+	Messagetype type;
+	InternalValue* vals;
+	size_t valsLen;
+} Message;
+Message constructMessage(Messagetype,InternalValue*,size_t);
 
 typedef struct{
 	StatePair* pairs;
