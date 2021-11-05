@@ -25,16 +25,24 @@ void* backend_state;
 
 char* StringForward(char* str,size_t size){
 	std::cout << str << std::endl;
-	StateResponse rawResponse = MessageReceive(backend_state, str, size);
-	string strResponse = stringFromStateResponse(rawResponse);
-	//MEMORY LEAK HERE OH GOD
-	char* ret = (char*) malloc(strResponse.length()+1);
-	std::strcpy(strResponse.data(),ret);
-	return ret;
+	size_t responseSize;
+	char* response = MessageReceive(backend_state, str, size,&responseSize);
+	response = BackToFront(response,responseSize,&responseSize);
+	nullEnd(response,responseSize);
+	return response;
 }
 
 void initMiddleware(void *f_state, void *b_state){
 	frontend_state = f_state;
 	backend_state = b_state;
 	while(true) std::this_thread::sleep_for(std::chrono::minutes(1));
+}
+char* BackToFront(char* resp,size_t size,size_t *newSize){
+	*newSize = size;
+	return resp;
+}
+
+char* FrontToBack(char* resp,size_t size,size_t *newSize){
+	*newSize = size;
+	return resp;
 }

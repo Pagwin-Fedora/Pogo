@@ -7,3 +7,4 @@
 	else
 #define close_sswitch {}
 #define sdefault
+void nullEnd(char*,size_t);
