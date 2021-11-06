@@ -1,6 +1,4 @@
 #include <algorithm>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
@@ -10,7 +8,6 @@
 #include <numeric>
 #include <optional>
 #include <iostream>
-#include <boost/algorithm/string.hpp>
 #include <thread>
 #include <chrono>
 #include "pogo-daemon-api.h"

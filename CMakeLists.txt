@@ -4,7 +4,7 @@ project(Pogo-daemon)
 include(ExternalProject)
 #needed for rust and go linkage because reasons
 add_link_options(-lpthread -ldl)
-add_executable(Pogo-daemon pogo-daemon.cxx pogo-daemon-api.cxx)
+add_executable(Pogo-daemon pogo-daemon.cxx pogo-daemon-api.cxx string-utils.cxx)
 
 
 # rust tcp frontend build stuff

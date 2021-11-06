@@ -17,6 +17,7 @@ extern "C" char* StringForward(char*,size_t);
 //implemented elsewhere and need to be imported
 extern "C"{
 	//pointers is for the state object
+	//TODO: make all these size and data things consistent
 	void* initFrontend(size_t, unsigned char*);
 	char* MessageReceive(void* backend_state, char*, size_t,size_t*);
 	void* initBackend(size_t, unsigned char*);
