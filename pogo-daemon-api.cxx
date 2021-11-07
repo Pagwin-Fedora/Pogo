@@ -10,6 +10,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <list>
 #include "pogo-daemon-api.h"
 #include "string-utils.h"
 

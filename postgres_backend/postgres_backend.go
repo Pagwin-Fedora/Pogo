@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"database/sql"
 	"unsafe"
+	"strings"
 	_ "github.com/jackc/pgx/v4/stdlib"
 );
 
 //#include<stdlib.h>
-//#include "../pogo-daemon-api.h"
+//#include "../pogo-daemon-api-extern.h"
 import "C";
 
 type BackendState struct {
@@ -44,10 +45,22 @@ func initBackend(size C.size_t, rawConfig *C.char) *C.void{
 	}
 	return (*C.void)(unsafe.Pointer(&BackendState {sync.Mutex{},config,db}))
 }
-type 
 //export MessageReceive
-func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnMessageLen) *C.char{
-
+func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnMessageLen *C.size_t) *C.char{
+	state_obj := (*BackendState)(unsafe.Pointer(state))
+	go_msg := string((*(*[]byte)(unsafe.Pointer(message)))[:messageLen])
+	*returnMessageLen = messageLen
+	state_obj.mutex.Lock()
+	lines := strings.Split(go_msg,"\n")
+	for _, line := range lines {
+		tokens := strings.Split(line," ")
+		args := tokens[1:len(tokens)]
+		switch attr := tokens[0]; attr {
+			case ""
+		}
+		if args[0] == "t"{}
+	}
+	return message
 }
 //why do you have to do this to me go
 func main(){}

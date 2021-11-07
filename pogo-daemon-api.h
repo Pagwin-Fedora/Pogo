@@ -1,12 +1,4 @@
-#include <memory>
-#include <string>
-#include <list>
-#include <optional>
-#include <functional>
-#include <utility>
-using std::string;
-
-
+#include <stdlib.h>
 void initMiddleware(void* frontend_state, void* backend_state);
 char* BackToFront(char*,size_t,size_t*);
 char* FrontToBack(char*,size_t,size_t*);
