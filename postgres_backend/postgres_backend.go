@@ -28,8 +28,6 @@ type BackendConfig struct {
 }
 //export initBackend
 func initBackend(size C.size_t, rawConfig *C.char) *C.void{
-	//this is scary
-	//goConfig = C.GoString(config)
 	var config BackendConfig
 	//I think this is fine but I'm not sure lol
 	byte_array := (*(*[]byte)(unsafe.Pointer(rawConfig)))[:size]
@@ -55,12 +53,51 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	for _, line := range lines {
 		tokens := strings.Split(line," ")
 		args := tokens[1:len(tokens)]
-		switch attr := tokens[0]; attr {
-			case ""
+		var attrBased bool;
+		var editDestroy bool;
+		var attr string;
+		switch attri := tokens[0]; attri {
+			case "ITEM":
+				attr = "I"
+				attrBased = false
+				switch len(args){
+					case 0:
+						editDestroy = false
+						break
+					case 1:
+						editDestroy = true
+						break
+					default:
+						return "ERROR to many arguments"
+				}
+				break
+			case "ITEMS":
+				attr = "IS"
+				attrBased = false
+				switch len(args){
+					case 0:
+						editDestroy false
+						break
+					default:
+						editDestroy true
+				}
+				break
+			case "NAME":
+			case "DESCRIPTION":
+			case "PARENTS":
+			case "CHILDREN":
+			case "PROGRESS":
+			case "METADATA":
+				attrBased = true
+				attr = strings.ToLower(attri)
+				break
+			default:
+				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
-		if args[0] == "t"{}
+		len(args)
 	}
 	return message
 }
+func constructQuery(attr string, editDestroy bool,args []string)
 //why do you have to do this to me go
 func main(){}
