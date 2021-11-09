@@ -12,11 +12,11 @@ to request information the UUID and the attribute(case-insensitive) are given to
 there are 2 types of objects which can be processed, items and groups, here are the attributes for each with their type
 
 ### ITEM
-groups: uuid[]
-parents: uuid[]
-children: uuid[]
+id: serial
+parents: integer[]
+children: integer[]
 message: string
-progress: float
+progress: (integer, integer)
 metadata: json
 
 ## Internal to Storage

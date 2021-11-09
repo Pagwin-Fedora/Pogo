@@ -8,11 +8,11 @@ import (
 	"unsafe"
 	"strings"
 	_ "github.com/jackc/pgx/v4/stdlib"
-);
+)
 
 //#include<stdlib.h>
 //#include "../pogo-daemon-api-extern.h"
-import "C";
+import "C"
 
 type BackendState struct {
 	mutex sync.Mutex
@@ -68,7 +68,7 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 						editDestroy = true
 						break
 					default:
-						return "ERROR to many arguments"
+						return C.CString("ERROR to many arguments")
 				}
 				break
 			case "ITEMS":
@@ -76,10 +76,10 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 				attrBased = false
 				switch len(args){
 					case 0:
-						editDestroy false
+						editDestroy = false
 						break
 					default:
-						editDestroy true
+						editDestroy = true
 				}
 				break
 			case "NAME":
@@ -88,16 +88,61 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 			case "CHILDREN":
 			case "PROGRESS":
 			case "METADATA":
+				switch len(args){
+					case 0:
+						return C.CString("ERROR to few arguments")
+					case 1:
+						editDestroy = false
+						break
+					default:
+						editDestroy = true
+						break
+				}
 				attrBased = true
 				attr = strings.ToLower(attri)
 				break
 			default:
 				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
-		len(args)
 	}
-	return message
+	queries := constructQuery(atrr,editDestroy,args)
+	if len(queries) == 0 {return "ERROR malformed query or internal error"}
+	for i, query := range queries {
+		if i == len(queries)-1 {
+			break
+		}
+		sql.Query(queries[len(queries)-1])
+	}
+	query_results := sql.Query(queries[len(queries)-1])
+	//should probably check for an error before I think about returning
+	if editDestroy {
+		return message
+	}
+	else {
+		//I need to send messages that indicate state changes that correspond to what the actual internal state is
+
+	}
 }
-func constructQuery(attr string, editDestroy bool,args []string)
+func constructQuery(field string, editDestroy bool,args []string) []string{
+	conjoined_args = strings.join(args," ")
+	switch field {
+		case "I":
+			if editDestroy{
+				return ["DELETE FROM pogo_items WHERE id="+conjoined_args+";"]
+			}
+			else {
+				return ["INSERT INTO pogo_items DEFAULT VALUES;"]
+			}
+		case "IS":
+			if editDestroy{
+				return ["DELETE FROM pogo_items WHERE NOT id in ("+strings.join(args,",")+");"]
+			}
+			else {
+				return ["SELECT id FROM pogo_items;"]
+			}
+		default:
+			return []
+	}
+}
 //why do you have to do this to me go
 func main(){}
