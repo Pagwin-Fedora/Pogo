@@ -128,21 +128,35 @@ func constructQuery(field string, editDestroy bool,args []string) []string{
 	switch field {
 		case "I":
 			if editDestroy{
-				return ["DELETE FROM pogo_items WHERE id="+conjoined_args+";"]
+				return [fmt.Sprintf("DELETE FROM pogo_items WHERE id=%s;",conjoined_args)]
 			}
 			else {
 				return ["INSERT INTO pogo_items DEFAULT VALUES;"]
 			}
 		case "IS":
 			if editDestroy{
-				return ["DELETE FROM pogo_items WHERE NOT id in ("+strings.join(args,",")+");"]
+				return [fmt.Sprintf("DELETE FROM pogo_items WHERE NOT id in (%s);",strings.join(args,","))]
 			}
 			else {
 				return ["SELECT id FROM pogo_items;"]
 			}
-		default:
+		case "PROGRESS":
+			if editDestroy{
+				return [fmt.Sprintf("UPDATE pogo_items SET progress=(%s,%s) WHERE id=%s;",args[1],args[2],args[0])]
+			}
+			else {
+				return ["SELECT progress FROM pogo_items;"]
+			}
+		case "NAME":
+		case "DESCRIPTION":
+		case "PARENTS":
+		case "CHILDREN":
+		case "METADATA":
 			return []
+		case "ERROR":
+			return ["AWK"]
 	}
+
 }
 //why do you have to do this to me go
 func main(){}
