@@ -101,17 +101,17 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 				attrBased = true
 				attr = strings.ToLower(attri)
 				break
+			case "ERROR":
+				return C.CString("AWK")
+			case "AWK":
+				return C.CString("")
 			default:
 				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
 	}
-	queries := constructQuery(atrr,editDestroy,args)
-	if len(queries) == 0 {return "ERROR malformed query or internal error"}
-	for i, query := range queries {
-		if i == len(queries)-1 {
-			break
-		}
-		sql.Query(queries[len(queries)-1])
+	query := constructQuery(atrr,editDestroy,args)
+	resp = sql.Query(query)
+	//read into the stdlib Rows object it'll help getting the data out
 	}
 	query_results := sql.Query(queries[len(queries)-1])
 	//should probably check for an error before I think about returning
@@ -123,38 +123,48 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 
 	}
 }
-func constructQuery(field string, editDestroy bool,args []string) []string{
+func constructQuery(field string, editDestroy bool,args []string) string{
 	conjoined_args = strings.join(args," ")
 	switch field {
 		case "I":
 			if editDestroy{
-				return [fmt.Sprintf("DELETE FROM pogo_items WHERE id=%s;",conjoined_args)]
+				return fmt.Sprintf("DELETE FROM pogo_items WHERE id=%s;",conjoined_args)
 			}
 			else {
-				return ["INSERT INTO pogo_items DEFAULT VALUES;"]
+				//I think this works but I'm not sure
+				return "INSERT INTO pogo_items DEFAULT VALUES; SELECT MAX(id) FROM pogo_items;"
 			}
 		case "IS":
 			if editDestroy{
-				return [fmt.Sprintf("DELETE FROM pogo_items WHERE NOT id in (%s);",strings.join(args,","))]
+				return fmt.Sprintf("DELETE FROM pogo_items WHERE NOT id in (%s);",strings.join(args,","))
 			}
 			else {
-				return ["SELECT id FROM pogo_items;"]
+				return "SELECT id FROM pogo_items;"
 			}
-		case "PROGRESS":
+		case "progress":
 			if editDestroy{
-				return [fmt.Sprintf("UPDATE pogo_items SET progress=(%s,%s) WHERE id=%s;",args[1],args[2],args[0])]
+				return fmt.Sprintf("UPDATE pogo_items SET progress=(%s,%s) WHERE id=%s;",args[1],args[2],args[0])
 			}
 			else {
-				return ["SELECT progress FROM pogo_items;"]
+				return "SELECT progress FROM pogo_items;"
 			}
-		case "NAME":
-		case "DESCRIPTION":
-		case "PARENTS":
-		case "CHILDREN":
-		case "METADATA":
-			return []
-		case "ERROR":
-			return ["AWK"]
+		case "name":
+		case "description":
+		case "metadata":
+			if editDestroy{
+				return fmt.Sprintf("UPDATE pogo_items SET %s='%s' WHERE id=%s;",attr,strings.join(args[1:]," "),args[0])
+			}
+			else {
+				return fmt.Sprintf("SELECT %s FROM pogo_items;")
+			}
+		case "parents":
+		case "children":
+			if editDestroy{
+				return fmt.Sprintf("UPDATE pogo_items SET %s='{%s}' WHERE id=%s;",attr,strings.join(args[1:],","),args[0])
+			}
+			else {
+				return fmt.Sprintf("SELECT %s FROM pogo_items WHERE id=%s;",attr,args[0])
+			}
 	}
 
 }
