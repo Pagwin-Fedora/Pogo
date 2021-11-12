@@ -123,6 +123,7 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 
 	}
 }
+//This definitely allows for sql injections so that's something to fix
 func constructQuery(field string, editDestroy bool,args []string) string{
 	conjoined_args = strings.join(args," ")
 	switch field {
