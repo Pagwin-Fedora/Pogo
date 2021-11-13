@@ -49,6 +49,7 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	go_msg := string((*(*[]byte)(unsafe.Pointer(message)))[:messageLen])
 	*returnMessageLen = messageLen
 	state_obj.mutex.Lock()
+	defer state_obj.mutex.Unlock()
 	lines := strings.Split(go_msg,"\n")
 	for _, line := range lines {
 		tokens := strings.Split(line," ")
@@ -109,11 +110,13 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
 	}
+	//Use a transaction by doing sql
 	query := constructQuery(atrr,editDestroy,args)
-	resp = sql.Query(query)
+	defer query.Close()
+	resp = state_obj.db.Query(query)
 	//read into the stdlib Rows object it'll help getting the data out
 	}
-	query_results := sql.Query(queries[len(queries)-1])
+	query_results := state_obj.db.Query(queries[len(queries)-1])
 	//should probably check for an error before I think about returning
 	if editDestroy {
 		return message
@@ -124,12 +127,12 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	}
 }
 //This definitely allows for sql injections so that's something to fix
-func constructQuery(field string, editDestroy bool,args []string) string{
+func constructQuery(field string, editDestroy bool,args []string) []sql.Stmt{
 	conjoined_args = strings.join(args," ")
 	switch field {
 		case "I":
 			if editDestroy{
-				return fmt.Sprintf("DELETE FROM pogo_items WHERE id=%s;",conjoined_args)
+				return [sql.Prepare("DELETE FROM pogo_items WHERE id =?",conjoined_args)]
 			}
 			else {
 				//I think this works but I'm not sure
