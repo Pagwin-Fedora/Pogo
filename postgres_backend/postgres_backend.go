@@ -110,10 +110,9 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
 	}
-	//Use a transaction by doing sql
-	query := constructQuery(atrr,editDestroy,args)
-	defer query.Close()
-	resp = state_obj.db.Query(query)
+	statement, args, shouldCollapse := constructQuery(atrr,editDestroy,args)
+	defer statement.Close()
+	//resp = state_obj.db.Query(query)
 	//read into the stdlib Rows object it'll help getting the data out
 	}
 	query_results := state_obj.db.Query(queries[len(queries)-1])
@@ -127,47 +126,48 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	}
 }
 //This definitely allows for sql injections so that's something to fix
-func constructQuery(field string, editDestroy bool,args []string) []sql.Stmt{
+func constructQuery(field string, editDestroy bool,args []string, db sql.DB) sql.Stmt, []string, bool{
 	conjoined_args = strings.join(args," ")
 	switch field {
 		case "I":
 			if editDestroy{
-				return [sql.Prepare("DELETE FROM pogo_items WHERE id =?",conjoined_args)]
+				return db.Prepare("DELETE FROM pogo_items WHERE id = ?"), [args[0]], false
 			}
 			else {
-				//I think this works but I'm not sure
-				return "INSERT INTO pogo_items DEFAULT VALUES; SELECT MAX(id) FROM pogo_items;"
+				return db.Prepare("INSERT INTO pogo_items DEFAULT VALUES RETURNING id"), [], false
 			}
 		case "IS":
 			if editDestroy{
-				return fmt.Sprintf("DELETE FROM pogo_items WHERE NOT id in (%s);",strings.join(args,","))
+				//this is a painful hack but fuck it 
+				return db.Prepare("DELETE FROM pogo_items WHERE NOT id in ?"), args, true
 			}
 			else {
-				return "SELECT id FROM pogo_items;"
+				return db.Prepare("SELECT id FROM pogo_items"), [], false
 			}
 		case "progress":
 			if editDestroy{
-				return fmt.Sprintf("UPDATE pogo_items SET progress=(%s,%s) WHERE id=%s;",args[1],args[2],args[0])
+				return db.Prepare("UPDATE pogo_items SET progress=(?,?) WHERE id=?"), [args[1], args[2], args[0]], false
 			}
 			else {
-				return "SELECT progress FROM pogo_items;"
+				return db.Prepare("SELECT progress FROM pogo_items"), [], false
 			}
 		case "name":
 		case "description":
 		case "metadata":
 			if editDestroy{
-				return fmt.Sprintf("UPDATE pogo_items SET %s='%s' WHERE id=%s;",attr,strings.join(args[1:]," "),args[0])
+				return db.Prepare("UPDATE pogo_items SET ? = ? WHERE id=?"),[attr,strings.join(args[1:]," "),args[0]],
 			}
 			else {
-				return fmt.Sprintf("SELECT %s FROM pogo_items;")
+				return db.Prepare("SELECT ? FROM pogo_items"), [attr], false
 			}
 		case "parents":
 		case "children":
 			if editDestroy{
-				return fmt.Sprintf("UPDATE pogo_items SET %s='{%s}' WHERE id=%s;",attr,strings.join(args[1:],","),args[0])
+				//FUCK
+				return fmt.Sprintf("UPDATE pogo_items SET %s='{%s}' WHERE id=%s",attr,strings.join(args[1:],","),args[0])
 			}
 			else {
-				return fmt.Sprintf("SELECT %s FROM pogo_items WHERE id=%s;",attr,args[0])
+				return db.Prepare("SELECT ? FROM pogo_items WHERE id=?"),[attr,args[0]],false
 			}
 	}
 
