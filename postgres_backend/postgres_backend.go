@@ -110,8 +110,7 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
 	}
-	transaction = db.Begin()
-	constructQuery(atrr,editDestroy,args, transaction)
+	query, args, err := constructQuery(atrr,editDestroy,args, db)
 	//resp = state_obj.db.Query(query)
 	//read into the stdlib Rows object it'll help getting the data out
 	}
@@ -126,38 +125,66 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	}
 }
 //This definitely allows for sql injections so that's something to fix
-func constructQuery(field string, editDestroy bool,args []string, transaction sql.Tx*) {
+func constructQuery(field string, editDestroy bool,args []string, transaction sql.Db) sql.Stmt, args []string, err error {
 	conjoined_args = strings.join(args," ")
 	switch field {
 		case "I":
 			if editDestroy{
-				transaction.Exec("DELETE FROM pogo_items WHERE id = ?", args[0])
+				statement, err := transaction.Prepare("DELETE FROM pogo_items WHERE id = ?", args[0])
+				if err != nil {
+					panic("err = nil")
+				}
+				return statement
 			}
 			else {
-				transaction.Exec("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
+				statement, err := transaction.Prepare("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
+				if err != nil {
+					panic("err = nil")
+				}
+				return statement
 			}
 		case "IS":
 			if editDestroy{
-				transaction.Exec("DELETE FROM pogo_items WHERE NOT id in ?", args)
+				statement, err := transaction.Prepare("DELETE FROM pogo_items WHERE NOT id in ?", args)
+				if err != nil {
+					panic("err = nil")
+				}
+				return statement
 			}
 			else {
-				transaction.Query("SELECT id FROM pogo_items")
+				statement, err := transaction.Prepare("SELECT id FROM pogo_items")
+				if err != nil {
+					panic("err = nil")
+				}
+				return statement
 			}
 		case "progress":
 			if editDestroy{
-				transaction.Exec("UPDATE pogo_items SET progress=(?,?) WHERE id=?", args[1], args[2], args[0])
+				statement, err := transaction.Prepare("PreparePrepareSET progress=(?,?) WHERE id=?", args[1], args[2], args[0])
+				if err != nil {
+					panic("err = nil")
+				}
+				return statement
 			}
 			else {
-				transaction.Query("SELECT progress FROM pogo_items")
+				statement, err := transaction.Prepare("SELECT progress FROM pogo_items")
+				if err != nil {
+					panic("err = nil")
+				}
+				return statement
 			}
 		case "name":
 		case "description":
 		case "metadata":
 			if editDestroy{
-				transaction.Exec("UPDATE pogo_items SET ? = ? WHERE id = ?", attr,strings.join(args[1:]," "), args[0])
+				statement, err := transaction.Prepare("UPDATE pogo_items SET ? = ? WHERE id = ?", attr,strings.join(args[1:]," "), args[0])
+				if err != nil {
+					panic("err = nil")
+				}
+				return statement
 			}
 			else {
-				transaction.Query("SELECT ? FROM pogo_items", attr)
+				transaction.("SELECT ? FROM pogo_items", attr)
 			}
 		case "parents":
 		case "children":
