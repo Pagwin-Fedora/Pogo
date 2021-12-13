@@ -110,7 +110,10 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 			default:
 				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
-		msgs[i] = processMessage(attr,editDestroy,args,db)
+		msgs[i], err = processMessage(attr,editDestroy,args,db)
+		if err != nil {
+			panic("error oof")
+		}
 	}
 	return C.CString(strings.Join(msgs,"\n"))
 }
@@ -143,39 +146,46 @@ func constructQuery(field string, editDestroy bool,args []string, transaction sq
 				}
 				return statement
 			} else {
+				args := new([0]string)
 				statement, err := transaction.Prepare("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
 				if err != nil {
-					panic("err = nil")
+					return nil, nil, err
 				}
-				return statement
+				return statement, args, nil
 			}
 		case "IS":
 			if editDestroy{
 				statement, err := transaction.Prepare("DELETE FROM pogo_items WHERE NOT id in ?", args)
 				if err != nil {
-					panic("err = nil")
+					return nil, nil, err
 				}
-				return statement
+				return statement, args, nil
 			} else {
 				statement, err := transaction.Prepare("SELECT id FROM pogo_items")
 				if err != nil {
-					panic("err = nil")
+					return nil, nil, err
 				}
-				return statement
+				rargs := new([0]string)
+				return statement, rargs, nil
 			}
 		case "progress":
 			if editDestroy{
 				statement, err := transaction.Prepare("PreparePrepareSET progress=(?,?) WHERE id=?", args[1], args[2], args[0])
 				if err != nil {
-					panic("err = nil")
+					return nil, nil, err
 				}
-				return statement
+				rargs := new([3]string)
+				rargs[0] = args[1]
+				rargs[1] = args[2]
+				rargs[2] = args[0]
+				return statement, rargs, nil
 			} else {
 				statement, err := transaction.Prepare("SELECT progress FROM pogo_items")
 				if err != nil {
-					panic("err = nil")
+					return nil, nil, err
 				}
-				return statement
+				rargs := new([0]string)
+				return statement, rargs, nil
 			}
 		case "name":
 		case "description":
@@ -183,18 +193,30 @@ func constructQuery(field string, editDestroy bool,args []string, transaction sq
 			if editDestroy{
 				statement, err := transaction.Prepare("UPDATE pogo_items SET ? = ? WHERE id = ?", attr,strings.join(args[1:]," "), args[0])
 				if err != nil {
-					panic("err = nil")
+					return nil, nil, err
 				}
 				return statement
 			} else {
-				transaction.Prepare("SELECT ? FROM pogo_items", attr)
+				statement, err := transaction.Prepare("SELECT ? FROM pogo_items")
+				if err != nil {
+					return nil, nil, err
+				}
+				rargs := new([1]string)
+				rargs[0] = attr
+				return statement, rargs, nil
 			}
 		case "parents":
 		case "children":
 			if editDestroy{
-				transaction.Prepare("UPDATE pogo_items SET ? = {?} WHERE id = ?", attr, args[1:], args[0])
+				statement, err := transaction.Prepare("UPDATE pogo_items SET ? = {?} WHERE id = ?")
+				//uuuuuuuuuuuuuuuh
+				//attr, args[1:], args[0]
 			} else {
-				transaction.Prepare("SELECT ? FROM pogo_items WHERE id = ?", attr, args[0])
+				statement, err := transaction.Prepare("SELECT ? FROM pogo_items WHERE id = ?")
+				rargs := new([2]string)
+				rargs[0] = attr
+				rargs[1] = args[0]
+				return statement, rargs, nil
 			}
 	}
 
