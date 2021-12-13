@@ -51,7 +51,8 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	state_obj.mutex.Lock()
 	defer state_obj.mutex.Unlock()
 	lines := strings.Split(go_msg,"\n")
-	for _, line := range lines {
+	msgs := new([len(lines)]string)
+	for i, line := range lines {
 		tokens := strings.Split(line," ")
 		args := tokens[1:len(tokens)]
 		var attrBased bool;
@@ -109,34 +110,39 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 			default:
 				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
+		msgs[i] = processMessage(attr,editDestroy,args,db)
 	}
+	return C.CString(strings.Join(msgs,"\n"))
+}
+//
+func processParsec(field string, editDestroy bool, args []string, transaction sql.Db)(string, error){
 	query, args, err := constructQuery(atrr,editDestroy,args, db)
 	//resp = state_obj.db.Query(query)
 	//read into the stdlib Rows object it'll help getting the data out
-	}
-	query_results := 
+	
+	//query_results := 
 	//should probably check for an error before I think about returning
 	if editDestroy {
 		return message
-	}
-	else {
+	} else {
 		//I need to send messages that indicate state changes that correspond to what the actual internal state is
 
 	}
+	return message
 }
-//This definitely allows for sql injections so that's something to fix
-func constructQuery(field string, editDestroy bool,args []string, transaction sql.Db) sql.Stmt, args []string, err error {
+//
+func constructQuery(field string, editDestroy bool,args []string, transaction sql.Db)(sql.Stmt, []string, error){
 	conjoined_args = strings.join(args," ")
 	switch field {
 		case "I":
 			if editDestroy{
-				statement, err := transaction.Prepare("DELETE FROM pogo_items WHERE id = ?", args[0])
+				args := new([1]string)
+				statement, err := transaction.Prepare("DELETE FROM pogo_items WHERE id = ?"), args, nil
 				if err != nil {
 					panic("err = nil")
 				}
 				return statement
-			}
-			else {
+			} else {
 				statement, err := transaction.Prepare("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
 				if err != nil {
 					panic("err = nil")
@@ -150,8 +156,7 @@ func constructQuery(field string, editDestroy bool,args []string, transaction sq
 					panic("err = nil")
 				}
 				return statement
-			}
-			else {
+			} else {
 				statement, err := transaction.Prepare("SELECT id FROM pogo_items")
 				if err != nil {
 					panic("err = nil")
@@ -165,8 +170,7 @@ func constructQuery(field string, editDestroy bool,args []string, transaction sq
 					panic("err = nil")
 				}
 				return statement
-			}
-			else {
+			} else {
 				statement, err := transaction.Prepare("SELECT progress FROM pogo_items")
 				if err != nil {
 					panic("err = nil")
@@ -182,17 +186,15 @@ func constructQuery(field string, editDestroy bool,args []string, transaction sq
 					panic("err = nil")
 				}
 				return statement
-			}
-			else {
-				transaction.("SELECT ? FROM pogo_items", attr)
+			} else {
+				transaction.Prepare("SELECT ? FROM pogo_items", attr)
 			}
 		case "parents":
 		case "children":
 			if editDestroy{
-				transaction.Exec("UPDATE pogo_items SET ? = {?} WHERE id = ?", attr, args[1:], args[0])
-			}
-			else {
-				transaction.Query("SELECT ? FROM pogo_items WHERE id = ?", attr, args[0])
+				transaction.Prepare("UPDATE pogo_items SET ? = {?} WHERE id = ?", attr, args[1:], args[0])
+			} else {
+				transaction.Prepare("SELECT ? FROM pogo_items WHERE id = ?", attr, args[0])
 			}
 	}
 
