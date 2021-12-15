@@ -51,7 +51,7 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	state_obj.mutex.Lock()
 	defer state_obj.mutex.Unlock()
 	lines := strings.Split(go_msg,"\n")
-	msgs := new([len(lines)]string)
+	msgs := make([]string, len(lines))
 	for i, line := range lines {
 		tokens := strings.Split(line," ")
 		args := tokens[1:len(tokens)]
@@ -110,7 +110,8 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 			default:
 				panic("if you see this then you need to setup the default case for the postgres backend")
 		}
-		msgs[i], err = processMessage(attr,editDestroy,args,db)
+		msg, err := processParsec(attr,editDestroy,args,state_obj.db)
+		msgs[i] = msg
 		if err != nil {
 			panic("error oof")
 		}
@@ -118,8 +119,8 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	return C.CString(strings.Join(msgs,"\n"))
 }
 //
-func processParsec(field string, editDestroy bool, args []string, transaction sql.Db)(string, error){
-	query, args, err := constructQuery(atrr,editDestroy,args, db)
+func processParsec(field string, editDestroy bool, args []string, db *sql.DB)(string, error){
+	query, args, err := constructQuery(field,editDestroy,args, db)
 	//resp = state_obj.db.Query(query)
 	//read into the stdlib Rows object it'll help getting the data out
 	
@@ -134,20 +135,20 @@ func processParsec(field string, editDestroy bool, args []string, transaction sq
 	return message
 }
 //
-func constructQuery(field string, editDestroy bool,args []string, transaction sql.Db)(sql.Stmt, []string, error){
-	conjoined_args = strings.join(args," ")
+func constructQuery(field string, editDestroy bool,args []string, db *sql.DB)(*sql.Stmt, []string, error){
+	conjoined_args := strings.Join(args," ")
 	switch field {
 		case "I":
 			if editDestroy{
-				args := new([1]string)
-				statement, err := transaction.Prepare("DELETE FROM pogo_items WHERE id = ?"), args, nil
+				args := make([]string, 1)
+				statement, err := db.Prepare("DELETE FROM pogo_items WHERE id = ?")
 				if err != nil {
 					panic("err = nil")
 				}
-				return statement
+				return statement, args, nil
 			} else {
-				args := new([0]string)
-				statement, err := transaction.Prepare("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
+				args := make([]string, 0)
+				statement, err := db.Prepare("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
 				if err != nil {
 					return nil, nil, err
 				}
@@ -155,43 +156,43 @@ func constructQuery(field string, editDestroy bool,args []string, transaction sq
 			}
 		case "IS":
 			if editDestroy{
-				statement, err := transaction.Prepare("DELETE FROM pogo_items WHERE NOT id in ?", args)
+				statement, err := db.Prepare("DELETE FROM pogo_items WHERE NOT id in ?", args)
 				if err != nil {
 					return nil, nil, err
 				}
 				return statement, args, nil
 			} else {
-				statement, err := transaction.Prepare("SELECT id FROM pogo_items")
+				statement, err := db.Prepare("SELECT id FROM pogo_items")
 				if err != nil {
 					return nil, nil, err
 				}
-				rargs := new([0]string)
+				rargs := make([]string, 0)
 				return statement, rargs, nil
 			}
 		case "progress":
 			if editDestroy{
-				statement, err := transaction.Prepare("PreparePrepareSET progress=(?,?) WHERE id=?", args[1], args[2], args[0])
+				statement, err := db.Prepare("PreparePrepareSET progress=(?,?) WHERE id=?", args[1], args[2], args[0])
 				if err != nil {
 					return nil, nil, err
 				}
-				rargs := new([3]string)
+				rargs := make([]string, 3)
 				rargs[0] = args[1]
 				rargs[1] = args[2]
 				rargs[2] = args[0]
 				return statement, rargs, nil
 			} else {
-				statement, err := transaction.Prepare("SELECT progress FROM pogo_items")
+				resp, err := db.Query("SELECT progress FROM pogo_items")
 				if err != nil {
 					return nil, nil, err
 				}
-				rargs := new([0]string)
+				rargs := make([]string, 0)
 				return statement, rargs, nil
 			}
 		case "name":
 		case "description":
 		case "metadata":
 			if editDestroy{
-				statement, err := transaction.Prepare("UPDATE pogo_items SET ? = ? WHERE id = ?", attr,strings.join(args[1:]," "), args[0])
+				resp, err := db.Exec("UPDATE pogo_items SET ? = ? WHERE id = ?", attr,strings.Join(args[1:]," "), args[0])
 				if err != nil {
 					return nil, nil, err
 				}
@@ -201,7 +202,7 @@ func constructQuery(field string, editDestroy bool,args []string, transaction sq
 				if err != nil {
 					return nil, nil, err
 				}
-				rargs := new([1]string)
+				rargs := make([]string, 1)
 				rargs[0] = attr
 				return statement, rargs, nil
 			}
@@ -213,7 +214,7 @@ func constructQuery(field string, editDestroy bool,args []string, transaction sq
 				//attr, args[1:], args[0]
 			} else {
 				statement, err := transaction.Prepare("SELECT ? FROM pogo_items WHERE id = ?")
-				rargs := new([2]string)
+				rargs := make([]string, 2)
 				rargs[0] = attr
 				rargs[1] = args[0]
 				return statement, rargs, nil
