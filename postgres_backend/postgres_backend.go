@@ -120,6 +120,25 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 }
 //
 func processParsec(field string, editDestroy bool, args []string, attrBased bool, db *sql.DB)(string, error){
+	var message string
+	var err error
+	switch field {
+		case "I":
+			message, err = processItemQuery(editDestroy,args,db)
+			break
+		case "IS":
+			message, err = processItemsQuery(editDestroy,args,db)
+			break
+		case "progress":
+			message, err = processProgressQuery(editDestroy,args,db)
+			break
+		case "name":
+		case "description":
+		case "metadata":
+			message, err = processAttrQuery(field,editDestroy,args,db)
+			break
+
+	}
 	//constructQuery is a flawed idea that can't be salvaged
 	//query, args, err := constructQuery(field,editDestroy,args, db)
 	//resp = state_obj.db.Query(query)
@@ -137,6 +156,94 @@ func processParsec(field string, editDestroy bool, args []string, attrBased bool
 }
 func constructMessage(field string, args []string) string{
 	return strings.ToUpper(field)+strings.Join(args," ")
+}
+func processItemQuery(editDestroy bool, args []string, db *sql.DB)(string, err){
+//			if editDestroy{
+//				args := make([]string, 1)
+//				statement, err := db.Prepare("DELETE FROM pogo_items WHERE id = ?")
+//				if err != nil {
+//					panic("err = nil")
+//				}
+//				return statement, args, nil
+//			} else {
+//				args := make([]string, 0)
+//				statement, err := db.Prepare("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
+//				if err != nil {
+//					return nil, nil, err
+//				}
+//				return statement, args, nil
+//			}
+	
+}
+func processItemsQuery(editDestroy bool, args []string, db *sql.DB)(string, err){
+//			if editDestroy{
+//				statement, err := db.Prepare("DELETE FROM pogo_items WHERE NOT id in ?", args)
+//				if err != nil {
+//					return nil, nil, err
+//				}
+//				return statement, args, nil
+//			} else {
+//				statement, err := db.Prepare("SELECT id FROM pogo_items")
+//				if err != nil {
+//					return nil, nil, err
+//				}
+//				rargs := make([]string, 0)
+//				return statement, rargs, nil
+//			}
+	
+}
+func processProgressQuery(editDestroy bool, args []string, db *sql.DB)(string, err){
+//			if editDestroy{
+//				statement, err := db.Prepare("PreparePrepareSET progress=(?,?) WHERE id=?", args[1], args[2], args[0])
+//				if err != nil {
+//					return nil, nil, err
+//				}
+//				rargs := make([]string, 3)
+//				rargs[0] = args[1]
+//				rargs[1] = args[2]
+//				rargs[2] = args[0]
+//				return statement, rargs, nil
+//			} else {
+//				resp, err := db.Query("SELECT progress FROM pogo_items")
+//				if err != nil {
+//					return nil, nil, err
+//				}
+//				rargs := make([]string, 0)
+//				return statement, rargs, nil
+//			}
+	
+}
+func processAttrQuery(field string, editDestroy bool, args []string, db *sql.DB)(string, err){
+//			if editDestroy{
+//				resp, err := db.Exec("UPDATE pogo_items SET ? = ? WHERE id = ?", attr,strings.Join(args[1:]," "), args[0])
+//				if err != nil {
+//					return nil, nil, err
+//				}
+//				return statement
+//			} else {
+//				statement, err := transaction.Prepare("SELECT ? FROM pogo_items")
+//				if err != nil {
+//					return nil, nil, err
+//				}
+//				rargs := make([]string, 1)
+//				rargs[0] = attr
+//				return statement, rargs, nil
+//			}
+	
+}
+func processMaternalQuery(field string, editDestroy bool, args []string db *sql.DB)(string, err){
+//			if editDestroy{
+//				statement, err := transaction.Prepare("UPDATE pogo_items SET ? = {?} WHERE id = ?")
+//				//uuuuuuuuuuuuuuuh
+//				//attr, args[1:], args[0]
+//			} else {
+//				statement, err := transaction.Prepare("SELECT ? FROM pogo_items WHERE id = ?")
+//				rargs := make([]string, 2)
+//				rargs[0] = attr
+//				rargs[1] = args[0]
+//				return statement, rargs, nil
+//			}
+	
 }
 //
 //func constructQuery(field string, editDestroy bool,args []string, db *sql.DB)(*sql.Stmt, []string, error){
