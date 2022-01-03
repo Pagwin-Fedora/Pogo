@@ -61,7 +61,7 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 		var attr string;
 		switch attri := tokens[0]; attri {
 			case "ITEM":
-				attr = "I"
+				attr = "item"
 				attrBased = false
 				switch len(args){
 					case 0:
@@ -75,7 +75,7 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 				}
 				break
 			case "ITEMS":
-				attr = "IS"
+				attr = "items"
 				attrBased = false
 				switch len(args){
 					case 0:
@@ -125,10 +125,10 @@ func processParsec(field string, editDestroy bool, args []string, attrBased bool
 	var rows *sql.Rows
 	var err error
 	switch field {
-		case "I":
+		case "item":
 			result, rows, err = processItemQuery(editDestroy,args,db)
 			break
-		case "IS":
+		case "items":
 			result, rows, err = processItemsQuery(editDestroy,args,db)
 			break
 		case "progress":
@@ -158,24 +158,27 @@ func processParsec(field string, editDestroy bool, args []string, attrBased bool
 
 }
 func constructDataMessage(field string, result sql.Result, rows *sql.Rows) string {
-	return ""
+	if field == "item" && rows != nil {
+		return fmt.Sprintf("item ")
+	}
+	for 
 }
 func constructMessage(field string, args []string) string{
 	return strings.ToUpper(field)+strings.Join(args," ")
 }
 func processItemQuery(editDestroy bool, args []string, db *sql.DB)(sql.Result, *sql.Rows, error){
 			if editDestroy{
-				val, err := db.Exec("DELETE FROM pogo_items WHERE id = ?")
+				result, err := db.Exec("DELETE FROM pogo_items WHERE id = ?")
 				if err != nil {
 					return nil,nil, err
 				}
-				return val, nil, nil
+				return result, nil, nil
 			} else {
-				result, err := db.Exec("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
+				rows, err := db.Query("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
 				if err != nil {
 					return nil, nil, err
 				}
-				return result, nil, nil
+				return nil, rows, nil
 			}
 	
 }
