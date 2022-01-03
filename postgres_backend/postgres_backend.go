@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"unsafe"
 	"strings"
+	"errors"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
@@ -120,126 +121,124 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 }
 //
 func processParsec(field string, editDestroy bool, args []string, attrBased bool, db *sql.DB)(string, error){
-	var message string
+	var result sql.Result
+	var rows *sql.Rows
 	var err error
 	switch field {
 		case "I":
-			message, err = processItemQuery(editDestroy,args,db)
+			result, rows, err = processItemQuery(editDestroy,args,db)
 			break
 		case "IS":
-			message, err = processItemsQuery(editDestroy,args,db)
+			result, rows, err = processItemsQuery(editDestroy,args,db)
 			break
 		case "progress":
-			message, err = processProgressQuery(editDestroy,args,db)
+			result, rows, err = processProgressQuery(editDestroy,args,db)
 			break
 		case "name":
 		case "description":
 		case "metadata":
-			message, err = processAttrQuery(field,editDestroy,args,db)
+			result, rows, err = processAttrQuery(field,editDestroy,args,db)
 			break
 		case "parents":
 		case "children":
-			message, err = processMaternalQuery(field, editDestroy, args, db)
+			result, rows, err = processMaternalQuery(field, editDestroy, args, db)
 			break;
 		default:
-			return "", "invalid field"
+			return "", errors.New("invalid field")
+	}
+	if err != nil {
+		panic(err)
 	}
 	if editDestroy {
 		return constructMessage(field, args),nil
 	} else {
-		//I need to send messages that indicate state changes that correspond to what the actual internal state is
-
+		//TODO:I need to send messages that indicate state changes that correspond to what the actual internal state is
+		return "", nil
 	}
-	return message
+
 }
 func constructMessage(field string, args []string) string{
 	return strings.ToUpper(field)+strings.Join(args," ")
 }
-func processItemQuery(editDestroy bool, args []string, db *sql.DB)(string, err){
+func processItemQuery(editDestroy bool, args []string, db *sql.DB)(sql.Result, *sql.Rows, error){
 			if editDestroy{
 				args := make([]string, 1)
-				statement, err := db.Prepare("DELETE FROM pogo_items WHERE id = ?")
+				val, err := db.Exec("DELETE FROM pogo_items WHERE id = ?")
 				if err != nil {
-					panic("err = nil")
+					return nil,nil, err
 				}
-				return statement, args, nil
+				return val, nil, nil
 			} else {
 				args := make([]string, 0)
-				statement, err := db.Prepare("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
+				result, err := db.Exec("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
 				if err != nil {
 					return nil, nil, err
 				}
-				return statement, args, nil
+				return result, nil, nil
 			}
 	
 }
-func processItemsQuery(editDestroy bool, args []string, db *sql.DB)(string, err){
+func processItemsQuery(editDestroy bool, args []string, db *sql.DB)(sql.Result, *sql.Rows, error){
 			if editDestroy{
-				statement, err := db.Prepare("DELETE FROM pogo_items WHERE NOT id in ?", args)
+				result, err := db.Exec("DELETE FROM pogo_items WHERE NOT id in ?", args)
 				if err != nil {
 					return nil, nil, err
 				}
-				return statement, args, nil
+				return result, nil, nil
 			} else {
-				statement, err := db.Prepare("SELECT id FROM pogo_items")
+				rows, err := db.Query("SELECT id FROM pogo_items")
 				if err != nil {
 					return nil, nil, err
 				}
 				rargs := make([]string, 0)
-				return statement, rargs, nil
+				return nil, rows, nil
 			}
 	
 }
-func processProgressQuery(editDestroy bool, args []string, db *sql.DB)(string, err){
+func processProgressQuery(editDestroy bool, args []string, db *sql.DB)(sql.Result,*sql.Rows, error){
 			if editDestroy{
-				statement, err := db.Prepare("PreparePrepareSET progress=(?,?) WHERE id=?", args[1], args[2], args[0])
+				result, err := db.Exec("SET progress=(?,?) WHERE id=?", args[1], args[2], args[0])
 				if err != nil {
 					return nil, nil, err
 				}
-				rargs := make([]string, 3)
-				rargs[0] = args[1]
-				rargs[1] = args[2]
-				rargs[2] = args[0]
-				return statement, rargs, nil
+				return result, nil, nil
 			} else {
-				resp, err := db.Query("SELECT progress FROM pogo_items")
+				rows, err := db.Query("SELECT progress FROM pogo_items")
 				if err != nil {
 					return nil, nil, err
 				}
-				rargs := make([]string, 0)
-				return statement, rargs, nil
+				return nil, rows, nil
 			}
 	
 }
-func processAttrQuery(field string, editDestroy bool, args []string, db *sql.DB)(string, err){
+func processAttrQuery(field string, editDestroy bool, args []string, db *sql.DB)(sql.Result, *sql.Rows, error){
 			if editDestroy{
-				resp, err := db.Exec("UPDATE pogo_items SET ? = ? WHERE id = ?", attr,strings.Join(args[1:]," "), args[0])
+				result, err := db.Exec("UPDATE pogo_items SET ? = ? WHERE id = ?", field,strings.Join(args[1:]," "), args[0])
 				if err != nil {
 					return nil, nil, err
 				}
-				return statement
+				return result, nil, nil
 			} else {
-				statement, err := transaction.Prepare("SELECT ? FROM pogo_items")
+				rows, err := db.Query("SELECT ? FROM pogo_items",field)
 				if err != nil {
 					return nil, nil, err
 				}
-				rargs := make([]string, 1)
-				rargs[0] = attr
-				return statement, rargs, nil
+				return nil, rows, nil
 			}
 	
 }
-func processMaternalQuery(field string, editDestroy bool, args []string db *sql.DB)(string, err){
+func processMaternalQuery(field string, editDestroy bool, args []string, db *sql.DB)(sql.Result, *sql.Rows, error){
 			if editDestroy{
-				statement, err := transaction.Prepare("UPDATE pogo_items SET ? = {?} WHERE id = ?")
+				result, err := db.Exec("UPDATE pogo_items SET ? = {?} WHERE id = ?", field, args[0])
 				//uuuuuuuuuuuuuuuh
 				//attr, args[1:], args[0]
+				if err != nil {
+					return nil, nil, err
+				}
+				return result, nil, nil
 			} else {
-				statement, err := transaction.Prepare("SELECT ? FROM pogo_items WHERE id = ?")
-				rargs := make([]string, 2)
-				rargs[0] = attr
-				rargs[1] = args[0]
-				return statement, rargs, nil
+				rows, err := db.Query("SELECT ? FROM pogo_items WHERE id = ?",field,args[0])
+				return nil, rows, err
 			}
 	
 }
