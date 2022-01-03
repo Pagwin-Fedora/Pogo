@@ -158,21 +158,19 @@ func processParsec(field string, editDestroy bool, args []string, attrBased bool
 
 }
 func constructDataMessage(field string, result sql.Result, rows *sql.Rows) string {
-	
+	return ""
 }
 func constructMessage(field string, args []string) string{
 	return strings.ToUpper(field)+strings.Join(args," ")
 }
 func processItemQuery(editDestroy bool, args []string, db *sql.DB)(sql.Result, *sql.Rows, error){
 			if editDestroy{
-				args := make([]string, 1)
 				val, err := db.Exec("DELETE FROM pogo_items WHERE id = ?")
 				if err != nil {
 					return nil,nil, err
 				}
 				return val, nil, nil
 			} else {
-				args := make([]string, 0)
 				result, err := db.Exec("INSERT INTO pogo_items DEFAULT VALUES RETURNING id")
 				if err != nil {
 					return nil, nil, err
@@ -193,7 +191,6 @@ func processItemsQuery(editDestroy bool, args []string, db *sql.DB)(sql.Result, 
 				if err != nil {
 					return nil, nil, err
 				}
-				rargs := make([]string, 0)
 				return nil, rows, nil
 			}
 	
