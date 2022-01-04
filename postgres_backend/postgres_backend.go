@@ -119,7 +119,6 @@ func MessageReceive(state *C.void, message *C.char, messageLen C.size_t, returnM
 	}
 	return C.CString(strings.Join(msgs,"\n"))
 }
-//
 func processParsec(field string, editDestroy bool, args []string, attrBased bool, db *sql.DB)(string, error){
 	var result sql.Result
 	var rows *sql.Rows
@@ -150,7 +149,7 @@ func processParsec(field string, editDestroy bool, args []string, attrBased bool
 		panic(err)
 	}
 	if editDestroy {
-		return constructMessage(field, args), nil
+		return constructModMessage(field, args), nil
 	} else {
 		//TODO:I need to send messages that indicate state changes that correspond to what the actual internal state is
 		return constructDataMessage(field, result, rows), nil
@@ -159,12 +158,24 @@ func processParsec(field string, editDestroy bool, args []string, attrBased bool
 }
 func constructDataMessage(field string, result sql.Result, rows *sql.Rows) string {
 	if field == "item" && rows != nil {
-		return fmt.Sprintf("item ")
+		val, err := processItemRows(rows)
+		if err != nil {
+			panic(err)
+		}
+		//return an items response that provides the new list of all existing items
+		 fmt.Sprintf("ITEMS ", )
 	}
-	for 
+	else
 }
-func constructMessage(field string, args []string) string{
+func constructModMessage(field string, args []string) string{
 	return strings.ToUpper(field)+strings.Join(args," ")
+}
+func processItemRows(rows *sql.Rows) int, error {
+	defer rows.Close()
+	rows.Next()
+	var val int
+	err := rows.Scan(&val)
+	return val, err
 }
 func processItemQuery(editDestroy bool, args []string, db *sql.DB)(sql.Result, *sql.Rows, error){
 			if editDestroy{
@@ -222,7 +233,7 @@ func processAttrQuery(field string, editDestroy bool, args []string, db *sql.DB)
 				}
 				return result, nil, nil
 			} else {
-				rows, err := db.Query("SELECT ? FROM pogo_items",field)
+				rows, err := db.Query("SELECT ? FROM pogo_items WHERE id = ?",field,args[0])
 				if err != nil {
 					return nil, nil, err
 				}
