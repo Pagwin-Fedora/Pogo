@@ -1,0 +1,9 @@
+TODO list items/groups are structured into a tree-like graph, with each node holding the following
+
+ID: some id that is used to uniquely identify a list item/group
+Title: a string that specifies a title for the item/group
+Description: a string that specifies a larger body of text describing the item or group
+Parents: a list of ids that specify the ids of the parents of the node
+Children: a list of ids that specify the ids of the children of the node
+Username: a string that provides some kind of identifier for who should be able access the data contained within the node
+Metadata: json string that can store arbitrary data for any future additions to functionality
