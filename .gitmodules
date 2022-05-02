@@ -1,0 +1,9 @@
+[submodule "pogo_middleware"]
+	path = pogo_middleware
+	url = ssh://git@git.pagwin.xyz/git-server/repos/pogo_middleware
+[submodule "pogo_backend"]
+	path = pogo_backend
+	url = ssh://git@git.pagwin.xyz/git-server/repos/pogo_backend
+[submodule "pogo_frontend"]
+	path = pogo_frontend
+	url = ssh://git@git.pagwin.xyz/git-server/repos/pogo_frontend
